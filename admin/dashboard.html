@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت رزرو سالن</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Vazirmatn', sans-serif; 
+            background-color: #f3f4f6; /* gray-100 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            color: #1f2937; /* gray-800 */
+        }
+        .app-container {
+            background-color: white;
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); /* shadow-lg */
+            width: 100%;
+            max-width: 64rem; /* max-w-5xl to accommodate new column */
+        }
+        .step { display: none; }
+        .step.active { display: block; }
+        .btn {
+            padding: 0.625rem 1rem; /* py-2.5 px-4 */
+            border-radius: 0.375rem; /* rounded-md */
+            font-weight: 600; /* font-semibold */
+            transition: background-color 0.15s ease-in-out;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+        .btn-primary { background-color: #4f46e5; color: white; } /* indigo-600 */
+        .btn-primary:hover:not(:disabled) { background-color: #4338ca; } /* indigo-700 */
+        .btn-secondary { background-color: #d1d5db; color: #1f2937; } /* gray-300, gray-800 */
+        .btn-secondary:hover:not(:disabled) { background-color: #9ca3af; } /* gray-400 */
+        .btn-danger { background-color: #ef4444; color: white; } /* red-500 */
+        .btn-danger:hover:not(:disabled) { background-color: #dc2626; } /* red-600 */
+        .btn-success { background-color: #22c55e; color: white; } /* green-500 */
+        .btn-success:hover:not(:disabled) { background-color: #16a34a; } /* green-600 */
+        .btn-small { padding: 0.25rem 0.5rem; font-size: 0.75rem; /* text-xs */ }
+        .btn-edit { background-color: #f59e0b; color:white; } /* amber-500 */
+        .btn-edit:hover:not(:disabled) { background-color: #d97706; } /* amber-600 */
+        .btn-approve { background-color: #10b981; color:white; } /* emerald-500 */
+        .btn-approve:hover:not(:disabled) { background-color: #059669; } /* emerald-600 */
+
+
+        .input-field {
+            width: 100%;
+            padding: 0.625rem; /* p-2.5 */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .input-field[readonly] {
+            background-color: #f3f4f6; /* gray-100 */
+            color: #6b7280; /* gray-500 */
+            cursor: not-allowed;
+        }
+        .error-message { color: #ef4444; /* red-500 */ margin-top: 0.5rem; font-size: 0.875rem; /* text-sm */ }
+        .loading-message { text-align: center; margin-y: 1rem; color: #6b7280; } /* zinc-500 */
+        
+        table { width: 100%; border-collapse: collapse; table-layout: auto; } 
+        th, td {
+            border: 1px solid #e5e7eb; /* gray-200 */
+            padding: 0.75rem; /* p-3 */
+            text-align: right;
+            font-size: 0.875rem; /* text-sm */
+            word-wrap: break-word; 
+            white-space: nowrap; 
+        }
+        th { background-color: #f9fafb; /* gray-50 */ font-weight: 600; /* font-semibold */ }
+        tr:nth-child(even) { background-color: #f9fafb; /* gray-50 */ }
+        .table-container { 
+            max-height: 70vh; 
+            overflow-y: auto; 
+            overflow-x: auto; 
+            margin-top: 1.5rem;
+        } 
+         .list-item { padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.15s ease-in-out; margin-bottom: 0.75rem; }
+        .list-item:hover { background-color: #e0e7ff; border-color: #a5b4fc; } /* indigo-100, indigo-300 */
+        .management-option-btn {
+            display: block;
+            width: 100%;
+            margin-bottom: 0.75rem; /* mb-3 */
+            background-color: #6366f1; /* indigo-500 */
+            color: white;
+        }
+        .management-option-btn:hover {
+            background-color: #4f46e5; /* indigo-600 */
+        }
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem 0.375rem 0 0; /* rounded-t-md */
+            font-weight: 500; /* font-medium */
+            cursor: pointer;
+            background-color: #e5e7eb; /* gray-200 */
+            color: #4b5563; /* gray-600 */
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-bottom: none;
+        }
+        .tab-btn.active {
+            background-color: white;
+            color: #4f46e5; /* indigo-600 */
+            border-color: #d1d5db; /* gray-300 */
+            border-bottom: 1px solid white; /* To make it look connected to content below */
+            font-weight: 600;
+        }
+        .section-title {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600; /* font-semibold */
+            color: #be185d; /* pink-700 */
+            margin-top: 1.5rem; /* mt-6 */
+            margin-bottom: 1rem; /* mb-4 */
+            padding-bottom: 0.5rem; /* pb-2 */
+            border-bottom: 2px solid #fbcfe8; /* pink-200 */
+        }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.25rem; font-size: 0.875rem; color: #374151; }
+        .category-block-scrollable { 
+            overflow-x: auto;
+            padding-bottom: 10px; 
+        }
+        .service-item-row span, .category-header-title { 
+            white-space: nowrap;
+        }
+        .page-header {
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+        .page-title-salon {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: bold;
+            color: #be185d; /* pink-700 */
+            text-align: center;
+            margin-bottom: 0.25rem; /* mb-1 */
+        }
+        .page-subtitle-option {
+            font-size: 1.125rem; /* text-xl */
+            font-weight: 600; /* font-semibold */
+            color: #4f46e5; /* indigo-600 */
+            text-align: right;
+             margin-bottom: 1rem; /* mb-4 */
+        }
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .status-approved { background-color: #d1fae5; color: #065f46; } /* green-100, green-800 */
+        .status-pending { background-color: #feF3c7; color: #92400e; } /* amber-100, amber-700 */
+        .status-cancelled { background-color: #fecaca; color: #991b1b; } /* red-200, red-800 */
+        .status-completed { background-color: #c7d2fe; color: #4338ca; } /* indigo-300, indigo-800 */
+        
+        /* Review Card */
+        .review-card {
+            background-color: #f8fafc; /* slate-50 */
+            border: 1px solid #e2e8f0; /* slate-200 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        .star-rating .star {
+            color: #d1d5db; /* gray-300 */
+            font-size: 1.25rem;
+        }
+        .star-rating .star.selected {
+            color: #f59e0b; /* amber-500 */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div id="step1" class="step active">
+            <h2 class="text-xl font-semibold mb-6 text-center text-indigo-700">ورود مدیر سالن</h2>
+            <div class="mb-4">
+                <label for="managerMobileInput" class="block text-sm font-medium text-gray-700 mb-1">شماره موبایل مدیر:</label>
+                <input type="tel" id="managerMobileInput" class="input-field text-left dir-ltr" placeholder="مثال: 09123456789" maxlength="11">
+            </div>
+            <button id="btnGetOtp" class="btn btn-primary w-full">دریافت کد تایید</button>
+            <p id="errorStep1" class="error-message"></p>
+            <p id="loadingStep1" class="loading-message" style="display: none;">در حال ارسال کد...</p>
+        </div>
+
+        <div id="step2" class="step">
+            <h2 class="text-xl font-semibold mb-4 text-center text-indigo-700">تایید کد</h2>
+            <p id="adminOtpSentTo" class="mb-3 text-center text-sm text-gray-600"></p>
+            <p id="generatedOtpDisplay" class="mb-3 text-center text-sm text-blue-600 font-semibold"></p> 
+            <input type="number" id="adminOtpInput" placeholder="کد ۴ رقمی" class="input-field text-center dir-ltr" maxlength="4">
+            <div class="flex gap-2">
+                <button id="btnBackToMobileInput" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnVerifyAdminOtp" class="btn btn-primary flex-1">تایید</button> 
+            </div>
+            <p id="errorStep2" class="error-message"></p>
+            <p id="loadingStep2" class="loading-message" style="display: none;">در حال تایید کد...</p>
+        </div>
+
+        <div id="step3_salon_list" class="step">
+            <h2 class="text-xl font-semibold mb-4 text-center text-indigo-700">انتخاب سالن</h2>
+            <p class="text-center text-sm text-gray-600 mb-4">سالن مورد نظر برای مدیریت را انتخاب کنید:</p>
+            <div id="managedSalonListContainer" class="space-y-3 max-h-80 overflow-y-auto pr-2">
+                </div>
+            <p id="errorStep3_salon_list" class="error-message"></p>
+            <p id="loadingStep3Salons" class="loading-message" style="display: none;">در حال بارگذاری سالن‌ها...</p>
+            <div class="mt-4">
+                 <button id="btnAddNewSalonFromList" class="btn btn-success w-full">ثبت سالن جدید</button>
+            </div>
+            <div class="mt-2">
+                 <button id="btnAdminLogoutFromSalonList" class="btn btn-danger w-full">خروج کامل</button>
+            </div>
+        </div>
+        
+        <div id="step3_start_business" class="step">
+            <h2 class="text-xl font-semibold mb-4 text-center text-indigo-700">شروع کسب و کار شما</h2>
+            <div class="bg-indigo-50 p-6 rounded-lg shadow text-center">
+                <p class="text-lg mb-3">سلام!</p>
+                <p class="text-gray-700 mb-1">به نظر می‌رسد هنوز سالنی با شماره موبایل <span id="startBusinessMobileNumber" class="font-semibold text-pink-600"></span> در سیستم ثبت نشده است.</p>
+                <p class="text-gray-700 mb-6">جهت تعریف خدمات خود بر روی دکمه زیر بزنید و سفارش خدمات خود را مکانیزه کنید.</p>
+                <button id="btnDefineServices" class="btn btn-primary w-full max-w-xs mx-auto">تعریف خدمات سالن</button>
+            </div>
+             <div class="mt-6">
+                 <button id="btnAdminLogoutFromStartBusiness" class="btn btn-danger w-full">خروج کامل</button>
+            </div>
+            <p id="errorStep3_start_business" class="error-message"></p>
+        </div>
+
+
+        <div id="step4" class="step">
+            <h2 id="managementOptionsPageTitle" class="page-title-salon mb-6"></h2>
+            
+            <button id="btnManageBookings" class="btn management-option-btn">مدیریت رزرو ها</button>
+            <button id="btnManageCustomers" class="btn management-option-btn">مدیریت مشتریان</button>
+            <button id="btnUpdateSalonInfo" class="btn management-option-btn">بروزرسانی اطلاعات سالن</button>
+            <button id="btnManageCalendar" class="btn management-option-btn">تنظیم تقویم کاری</button>
+            <button id="btnManageCustomerClub" class="btn management-option-btn">باشگاه مشتریان</button>
+            <button id="btnManageReviews" class="btn management-option-btn">نظرات کاربران</button>
+            <button id="btnSendGroupMessage" class="btn management-option-btn">ارسال پیام گروهی</button>
+
+            <p id="errorStep4" class="error-message"></p>
+            <div class="mt-8">
+                 <button id="btnBackToSalonListOrLogin" class="btn btn-secondary w-full">بازگشت به لیست سالنها</button>
+            </div>
+        </div>
+
+
+        <div id="step5" class="step">
+            <div class="page-header">
+                <h2 id="bookingsPageSalonName" class="page-title-salon"></h2>
+                <h3 class="page-subtitle-option">مدیریت رزرو ها</h3>
+            </div>
+            <div class="flex border-b border-gray-300 mb-4">
+                <button id="btnCurrentBookingsTab" class="tab-btn active">رزروهای جاری</button>
+                <button id="btnCompletedBookingsTab" class="tab-btn">رزروهای پایان یافته</button>
+                <button id="btnCancelledBookingsTab" class="tab-btn">رزروهای لغو شده</button>
+            </div>
+            <p id="loadingStep5Bookings" class="loading-message" style="display: none;">در حال بارگذاری رزروها...</p> 
+            <p id="errorStep5" class="error-message"></p> 
+            <div id="bookingsTableContainer" class="table-container">
+                <table id="bookingsTable">
+                    <thead>
+                        <tr>
+                            <th>عملیات</th>
+                            <th>وضعیت</th>
+                            <th>مشتری</th>
+                            <th>شماره تماس</th>
+                            <th>تاریخ رزرو</th>
+                            <th>ساعت شروع</th>
+                            <th>ساعت پایان</th>
+                            <th>خدمات</th>
+                            <th>مبلغ اصلی</th>
+                            <th>مبلغ نهایی</th>
+                            <th>بیعانه</th>
+                            <th id="header-remaining">مانده</th>
+                            <th>زمان ثبت</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bookingsTableBody">
+                        </tbody>
+                </table>
+            </div>
+            <p id="noBookingsMessage" class="text-center text-gray-500 mt-4" style="display:none;">هیچ رزروی برای نمایش یافت نشد.</p>
+             <div class="mt-6 flex gap-2">
+                <button id="btnBackToManagementOptionsFromBookings" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnOpenManualBookingModal" class="btn btn-primary flex-1">ثبت رزرو دستی</button>
+            </div>
+        </div>
+
+        <div id="step6" class="step">
+             <div class="page-header">
+                <h2 id="customersPageSalonName" class="page-title-salon"></h2>
+                <h3 class="page-subtitle-option">مدیریت مشتریان</h3>
+            </div>
+            <p id="loadingStep6Customers" class="loading-message" style="display: none;">در حال بارگذاری لیست مشتریان...</p> 
+            <p id="errorStep6" class="error-message"></p> 
+            <div id="customersTableContainer" class="table-container">
+                <table id="customersTable">
+                    <thead>
+                        <tr>
+                            <th>نام مشتری</th>
+                            <th>موبایل</th>
+                            <th>تعداد مراجعه (این سالن)</th>
+                            <th>کل مبلغ خرید (این سالن)</th>
+                            <th>مجموع بیعانه پرداختی (این سالن)</th>
+                            <th>تعداد معرفی شده توسط ایشان</th>
+                            <th>تاریخ آخرین رزرو (این سالن)</th>
+                            <th>یادداشت مدیر</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customersTableBody">
+                        </tbody>
+                </table>
+            </div>
+            <p id="noCustomersMessage" class="text-center text-gray-500 mt-4" style="display:none;">هیچ مشتری برای نمایش یافت نشد.</p>
+            <div class="mt-6">
+                 <button id="btnBackToManagementOptionsFromCustomers" class="btn btn-secondary w-full">بازگشت به گزینه‌ها</button>
+            </div>
+        </div>
+
+        <div id="step7" class="step">
+            <div class="page-header">
+                 <h2 id="updateSalonPageSalonName" class="page-title-salon"></h2>
+                 <h3 id="updateSalonPageSubtitle" class="page-subtitle-option"></h3>
+            </div>
+            <div id="salonApprovalStatus" class="text-center mb-4"></div>
+            <div class="flex gap-2 mb-6">
+                <button id="btnApproveSalon" class="btn btn-approve flex-1" style="display:none;">تایید این سالن</button>
+                <button id="btnDeleteSalon" class="btn btn-danger flex-1" style="display:none;">حذف این سالن</button>
+            </div>
+
+
+            <div id="salonInfoUpdateForm">
+                <h3 class="section-title">اطلاعات پایه سالن</h3>
+                 <div class="form-group">
+                    <label for="editSalonId">شناسه سالن (انگلیسی، بدون فاصله، برای URL):</label>
+                    <input type="text" id="editSalonId" class="input-field text-left dir-ltr">
+                </div>
+                 <div class="form-group">
+                    <label for="editSalonMainCategory">دسته بندی (این مکان چه نوع خدمتی ارائه میدهد؟)</label>
+                    <select id="editSalonMainCategory" class="input-field">
+                        <option value="" disabled selected>یک دسته بندی را انتخاب کنید</option>
+                        <option value="پزشکی و سلامت">پزشکی و سلامت</option>
+                        <option value="زیبایی و آرایشی">زیبایی و آرایشی</option>
+                        <option value="حرفه‌ای و مشاوره‌ای">حرفه‌ای و مشاوره‌ای</option>
+                        <option value="خودرو و تعمیرات">خودرو و تعمیرات</option>
+                        <option value="ورزشی و تفریحی">ورزشی و تفریحی</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editSalonName">نام سالن:</label>
+                    <input type="text" id="editSalonName" class="input-field">
+                </div>
+                <div class="form-group">
+                    <label for="editSalonCityInput">شهر:</label>
+                     <input list="cities" id="editSalonCityInput" name="editSalonCityInput" class="input-field" placeholder="جستجو یا انتخاب شهر...">
+                     <datalist id="cities">
+                     </datalist>
+                </div>
+                <div class="form-group">
+                    <label for="editSalonAddress">آدرس:</label>
+                    <input type="text" id="editSalonAddress" class="input-field">
+                </div>
+                <div class="form-group">
+                    <label for="editSalonPhone">تلفن ثابت (اختیاری):</label>
+                    <input type="tel" id="editSalonPhone" class="input-field">
+                </div>
+                <div class="form-group">
+                    <label for="editSalonMobile">موبایل مدیر (این شماره):</label>
+                    <input type="tel" id="editSalonMobile" class="input-field text-left dir-ltr" readonly>
+                </div>
+                <div class="form-group">
+                    <label for="editSalonManagerName">نام مدیر:</label>
+                    <input type="text" id="editSalonManagerName" class="input-field">
+                </div>
+                <div class="form-group">
+                    <label for="editSalonInstagramUrl">آدرس اینستاگرام (اختیاری):</label>
+                    <input type="url" id="editSalonInstagramUrl" class="input-field text-left dir-ltr" placeholder="https://instagram.com/yourpage">
+                </div>
+                <button id="btnSaveSalonBaseInfo" class="btn btn-primary w-full mb-6">ذخیره اطلاعات پایه</button>
+                <p id="errorStep7Base" class="error-message"></p>
+                <p id="loadingStep7Base" class="loading-message" style="display:none;">در حال ذخیره...</p>
+            </div>
+
+            <div id="categoriesAndServicesSection" style="display:none;">
+                <h3 class="section-title">دسته‌بندی‌ها و خدمات</h3>
+                <div id="categoriesManagementContainer" class="space-y-4">
+                    </div>
+                <p id="errorStep7Categories" class="error-message"></p>
+                <p id="loadingStep7Categories" class="loading-message" style="display:none;">در حال پردازش...</p>
+            </div>
+             <div class="mt-8 flex gap-2">
+                 <button id="btnBackToManagementOptionsFromUpdate" class="btn btn-secondary flex-1">بازگشت به گزینه‌ها</button>
+                 <button id="btnAddSalonCategory" class="btn btn-success flex-1" style="display:none;">افزودن دسته‌بندی</button>
+            </div>
+        </div>
+        
+        <div id="step8_calendar" class="step">
+            <div class="page-header">
+                <h2 id="calendarPageSalonName" class="page-title-salon"></h2>
+                <h3 class="page-subtitle-option">تنظیم تقویم کاری</h3>
+            </div>
+            <div id="workHoursForm" class="space-y-4">
+                <!-- Days will be populated by JS -->
+            </div>
+             <p id="errorStep8" class="error-message"></p>
+            <p id="loadingStep8" class="loading-message" style="display:none;">در حال پردازش...</p>
+            <div class="mt-6 flex gap-2">
+                <button id="btnBackToManagementOptionsFromCalendar" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnSaveWorkHours" class="btn btn-primary flex-1">ذخیره تقویم کاری</button>
+            </div>
+        </div>
+        
+        <div id="step9_customer_club" class="step">
+            <div class="page-header">
+                <h2 id="customerClubPageSalonName" class="page-title-salon"></h2>
+                <h3 class="page-subtitle-option">باشگاه مشتریان و تخفیف‌ها</h3>
+            </div>
+             <div class="form-group">
+                <label for="minVisitsForDiscount">حداقل تعداد مراجعه برای دریافت تخفیف:</label>
+                <input type="number" id="minVisitsForDiscount" class="input-field" placeholder="مثلا: 5">
+            </div>
+             <div class="form-group">
+                <label for="minReferralsForDiscount">حداقل تعداد معرفی برای دریافت تخفیف:</label>
+                <input type="number" id="minReferralsForDiscount" class="input-field" placeholder="مثلا: 3">
+            </div>
+            <div class="form-group">
+                <label for="maxDiscountPercentage">حداکثر درصد تخفیف قابل اعمال:</label>
+                <input type="number" id="maxDiscountPercentage" class="input-field" placeholder="مثلا: 20">
+            </div>
+             <p id="errorStep9" class="error-message"></p>
+            <p id="loadingStep9" class="loading-message" style="display:none;">در حال ذخیره...</p>
+            <div class="mt-6 flex gap-2">
+                <button id="btnBackToManagementOptionsFromClub" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnSaveClubRules" class="btn btn-primary flex-1">ذخیره قوانین</button>
+            </div>
+        </div>
+        
+        <div id="step10_reviews" class="step">
+            <div class="page-header">
+                <h2 id="reviewsPageSalonName" class="page-title-salon"></h2>
+                <h3 class="page-subtitle-option">نظرات کاربران</h3>
+            </div>
+            <div id="reviewsContainer" class="space-y-4 max-h-[70vh] overflow-y-auto">
+                 <p id="noReviewsMessage" class="text-center text-gray-500" style="display:none;">هیچ نظری برای این سالن ثبت نشده است.</p>
+                <!-- Review items will be populated here -->
+            </div>
+            <p id="errorStep10" class="error-message"></p>
+            <p id="loadingStep10" class="loading-message" style="display:none;">در حال بارگذاری نظرات...</p>
+            <div class="mt-6">
+                 <button id="btnBackToManagementOptionsFromReviews" class="btn btn-secondary w-full">بازگشت</button>
+            </div>
+        </div>
+
+    </div>
+
+    <footer class="mt-8 text-center text-xs text-gray-500">
+        <p>Vahid Ostadhashemi</p>
+        <p class="mt-1">09122136866</p>
+    </footer>
+
+    <div id="customMessageBox" class="message-box"></div>
+    
+    <!-- Edit/Reactivate Booking Modal -->
+    <div id="editBookingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center" style="display: none; z-index: 50;">
+        <div class="relative mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+            <h3 id="editBookingModalTitle" class="text-lg font-medium leading-6 text-gray-900 mb-4">ویرایش / فعال‌سازی رزرو</h3>
+            <form id="editBookingForm">
+                <input type="hidden" id="editBookingId">
+                <div class="form-group">
+                    <label for="editBookingDate">تاریخ مراجعه:</label>
+                    <input type="text" id="editBookingDate" class="input-field text-left dir-ltr" placeholder="مثال: ۱۴۰۳/۰۳/۱۸" required>
+                </div>
+                <div class="flex gap-4">
+                    <div class="form-group flex-1">
+                        <label for="editStartTime">ساعت شروع:</label>
+                        <input type="time" id="editStartTime" class="input-field" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="editEndTime">ساعت پایان:</label>
+                        <input type="time" id="editEndTime" class="input-field" required>
+                    </div>
+                </div>
+                <p id="editBookingError" class="error-message"></p>
+                <div class="flex items-center gap-2 mt-4">
+                    <button type="button" id="btnCancelEditBooking" class="btn btn-secondary flex-1">انصراف</button>
+                    <button type="submit" id="btnSubmitEditBooking" class="btn btn-success flex-1">تایید تغییرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Manual Booking Modal -->
+    <div id="manualBookingModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center" style="display: none; z-index: 50;">
+        <div class="relative mx-auto p-5 border w-full max-w-md shadow-lg rounded-md bg-white">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">ثبت رزرو دستی</h3>
+            <form id="manualBookingForm">
+                <div class="form-group">
+                    <label for="manualCustomerName">نام مشتری:</label>
+                    <input type="text" id="manualCustomerName" class="input-field" required>
+                </div>
+                <div class="form-group">
+                    <label for="manualCustomerMobile">شماره موبایل:</label>
+                    <input type="tel" id="manualCustomerMobile" class="input-field text-left dir-ltr" required maxlength="11">
+                </div>
+                <div class="form-group">
+                    <label for="manualBookingDate">تاریخ مراجعه:</label>
+                    <input type="text" id="manualBookingDate" class="input-field text-left dir-ltr" placeholder="مثال: ۱۴۰۳/۰۳/۱۸" required>
+                </div>
+                <div class="flex gap-4">
+                    <div class="form-group flex-1">
+                        <label for="manualStartTime">ساعت شروع:</label>
+                        <input type="time" id="manualStartTime" class="input-field" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="manualEndTime">ساعت پایان:</label>
+                        <input type="time" id="manualEndTime" class="input-field" required>
+                    </div>
+                </div>
+                <p id="manualBookingError" class="error-message"></p>
+                <div class="flex items-center gap-2 mt-4">
+                    <button type="button" id="btnCancelManualBooking" class="btn btn-secondary flex-1">انصراف</button>
+                    <button type="submit" id="btnSubmitManualBooking" class="btn btn-success flex-1">ثبت رزرو</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeFirestore, getFirestore, collection, query, where, getDocs, Timestamp, setLogLevel, doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc as firestoreUpdateDoc, increment, arrayUnion, arrayRemove, addDoc, deleteField } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; 
+
+        // --- Global State and Constants ---
+        let currentAdminStep = 1;
+        let managerMobileNumber = '';
+        let managedSalons = []; 
+        let selectedManagedSalon = null; 
+        let allBookingsForSelectedSalon = []; 
+        const OTP_EXPIRATION_MINUTES_ADMIN = 5;
+        let activeBookingTab = 'current'; // Can be 'current', 'completed', or 'cancelled'
+        let cameFromSalonList = false; 
+
+        let db, auth, currentAdminUser, isAdminAuthReady = false;
+        let dataSeeded = false; 
+        
+        const userFirebaseConfig = { 
+            apiKey: "AIzaSyAh45LFZ9wIo17SJFcYU0pMc7u4OoKCQzw",
+            authDomain: "beyaneh-6248e.firebaseapp.com",
+            projectId: "beyaneh-6248e",
+            storageBucket: "beyaneh-6248e.firebasestorage.app",
+            messagingSenderId: "677613588556",
+            appId: "1:677613588556:web:732954add66e552618e4e9"
+        };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userFirebaseConfig;
+        
+        const primaryReservationUserAppId = 'salon-booking-html-dev'; 
+        const userAdminAppId = 'reservationlist-v1'; // AppId for useradmin.html data like salon reviews
+        const fallbackReservationUserAppId = 'c_d702cbc5bccca44d_salon_booking_app_html_js_fa-45';
+        let activeReservationUserAppId = primaryReservationUserAppId; 
+
+        const adminPanelAppId = typeof __app_id !== 'undefined' ? __app_id : 'reservationpanel-v1'; 
+        
+        const stepsDOM = document.querySelectorAll('.step');
+        const customMessageBoxDOM = document.getElementById('customMessageBox');
+
+        const provincesAndCities = {
+            "آذربایجان شرقی": ["تبریز", "مراغه", "مرند", "اهر", "میانه", "بناب", "سراب", "آذرشهر", "هادیشهر", "عجب‌شیر", "هشترود", "ملکان", "شبستر", "بستان‌آباد", "ورزقان", "اسکو", "کلیبر", "ایلخچی", "صوفیان", "جلفا"],
+            "آذربایجان غربی": ["ارومیه", "خوی", "بوکان", "مهاباد", "میاندوآب", "سلماس", "پیرانشهر", "نقده", "تکاب", "سردشت", "ماکو", "شاهین‌دژ", "قره‌ضیاءالدین", "اشنویه", "شوط"],
+            "اردبیل": ["اردبیل", "پارس‌آباد", "مشگین‌شهر", "خلخال", "گرمی", "بیله‌سوار", "نمین", "جعفرآباد", "گیوی", "اصلاندوز"],
+            "اصفهان": ["اصفهان", "کاشان", "خمینی‌شهر", "نجف‌آباد", "شاهین‌شهر", "شهرضا", "فولادشهر", "مبارکه", "آران و بیدگل", "لنجان", "فلاورجان", "گلپایگان", "زرین‌شهر", "درچه", "بهارستان", "خورزوق", "تیران"],
+            "البرز": ["کرج", "فردیس", "کمال‌شهر", "نظرآباد", "محمدشهر", "ماهدشت", "مشکین‌دشت", "هشتگرد", "چهارباغ", "اشتهارد"],
+            "ایلام": ["ایلام", "دهلران", "ایوان", "آبدانان", "دره‌شهر", "مهران", "سرابله", "ارکواز"],
+            "بوشهر": ["بوشهر", "برازجان", "گناوه", "خورموج", "جم", "کنگان", "دیر", "اهرم", "دیلم", "عسلویه"],
+            "تهران": ["تهران", "اسلام‌شهر", "شهریار", "قدس", "ملارد", "صالحیه", "پاکدشت", "قرچک", "ورامین", "گلستان", "ری", "اندیشه", "رباط‌کریم", "پرند", "باقرشهر", "پیشوا", "نسیم‌شهر"],
+            "چهارمحال و بختیاری": ["شهرکرد", "بروجن", "فرخ‌شهر", "فارسان", "لردگان", "هفشجان", "جونقان", "سامان", "فرادنبه"],
+            "خراسان جنوبی": ["بیرجند", "قائن", "فردوس", "نهبندان", "طبس مسینا", "خوسف", "اسدیه", "سربیشه"],
+            "خراسان رضوی": ["مشهد", "نیشابور", "سبزوار", "تربت حیدریه", "کاشمر", "قوچان", "تربت جام", "تایباد", "چناران", "سرخس", "گناباد", "فریمان", "درگز", "بردسکن"],
+            "خراسان شمالی": ["بجنورد", "شیروان", "اسفراین", "آشخانه", "جاجرم", "گرمه", "فاروج"],
+            "خوزستان": ["اهواز", "دزفول", "آبادان", "بندر ماهشهر", "اندیمشک", "خرمشهر", "بهبهان", "ایذه", "شوشتر", "مسجد سلیمان", "بندرامام خمینی", "رامهرمز", "شادگان", "شوش", "سوسنگرد", "هویزه"],
+            "زنجان": ["زنجان", "ابهر", "خرمدره", "قیدار", "هیدج", "صائین‌قلعه", "آب‌بر"],
+            "سمنان": ["سمنان", "شاهرود", "دامغان", "گرمسار", "مهدی‌شهر", "ایوانکی", "شهمیرزاد"],
+            "سیستان و بلوچستان": ["زاهدان", "زابل", "ایرانشهر", "چابهار", "سراوان", "خاش", "کنارک", "جالق", "نیک‌شهر", "راسک"],
+            "فارس": ["شیراز", "کازرون", "جهرم", "مرودشت", "فسا", "داراب", "فیروزآباد", "لار", "آباده", "نورآباد", "نی‌ریز", "اقلید", "استهبان"],
+            "قزوین": ["قزوین", "تاکستان", "الوند", "اقبالیه", "محمدیه", "آبیک", "بویین‌زهرا"],
+            "قم": ["قم", "جعفریه", "کهک", "قنوات", "سلفچگان"],
+            "کردستان": ["سنندج", "سقز", "مریوان", "بانه", "قروه", "کامیاران", "بیجار", "دیواندره", "دهگلان"],
+            "کرمان": ["کرمان", "سیرجان", "رفسنجان", "جیرفت", "بم", "زرند", "کهنوج", "شهربابک", "بافت", "بردسیر"],
+            "کرمانشاه": ["کرمانشاه", "اسلام‌آباد غرب", "جوانرود", "کنگاور", "سرپل ذهاب", "سنقر", "هرسین", "صحنه", "پاوه", "روانسر"],
+            "کهگیلویه و بویراحمد": ["یاسوج", "دوگنبدان", "دهدشت", "لیکک", "چرام", "لنده", "باشت"],
+            "گلستان": ["گرگان", "گنبد کاووس", "بندر ترکمن", "علی‌آباد کتول", "آق‌قلا", "کردکوی", "بندر گز", "مینودشت", "گالیکش", "کلاله"],
+            "گیلان": ["رشت", "بندر انزلی", "لاهیجان", "لنگرود", "آستارا", "تالش", "صومعه‌سرا", "آستانه اشرفیه", "رودسر", "فومن", "خمام", "سیاهکل"],
+            "لرستان": ["خرم‌آباد", "بروجرد", "دورود", "الیگودرز", "کوهدشت", "نورآباد", "ازنا", "الشتر", "پلدختر"],
+            "مازندران": ["ساری", "بابل", "آمل", "قائم‌شهر", "بهشهر", "چالوس", "نکا", "بابلسر", "نوشهر", "تنکابن", "جویبار", "فریدون‌کنار", "رامسر", "محمودآباد"],
+            "مرکزی": ["اراک", "ساوه", "خمین", "محلات", "دلیجان", "تفرش", "آشتیان", "شازند"],
+            "هرمزگان": ["بندرعباس", "میناب", "دهبارز", "بندر لنگه", "کیش", "قشم", "بستک", "حاجی‌آباد"],
+            "همدان": ["همدان", "ملایر", "نهاوند", "اسدآباد", "تویسرکان", "بهار", "کبودرآهنگ", "رزن"],
+            "یزد": ["یزد", "میبد", "اردکان", "بافق", "مهریز", "ابرکوه", "تفت", "زارچ", "اشکذر"]
+        };
+
+
+        const toPersianNum = (n) => {
+            if (n === null || n === undefined) return '';
+            const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+            return String(n).replace(/\d/g, d => persianDigits[d]);
+        };
+         const toEnglishNum = (s) => { 
+            if (s === null || s === undefined) return '';
+            const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+            return String(s).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
+        };
+
+
+        function showMessage(message, duration = 3000) {
+            customMessageBoxDOM.textContent = message;
+            customMessageBoxDOM.style.display = 'block';
+            setTimeout(() => {
+                customMessageBoxDOM.style.display = 'none';
+            }, duration);
+        }
+
+        function navigateToAdminStep(stepId) { 
+            stepsDOM.forEach(step => step.classList.remove('active'));
+            const targetStep = document.getElementById(typeof stepId === 'number' ? `step${stepId}` : stepId);
+            
+            if (targetStep) {
+                targetStep.classList.add('active');
+                if (typeof stepId === 'number') {
+                     currentAdminStep = stepId; 
+                } else if (stepId.startsWith('step')) {
+                    const stepNum = parseInt(stepId.split('_')[0].replace('step',''), 10);
+                    if(!isNaN(stepNum)) currentAdminStep = stepNum;
+                }
+            } else {
+                console.error(`Admin Step ID ${stepId} not found.`);
+            }
+            document.querySelector('.app-container').scrollTop = 0;
+            window.scrollTo({ top: document.querySelector('.app-container').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        function displayAdminError(stepId, message) {
+            const errorEl = document.getElementById(`errorStep${stepId}`);
+            if (errorEl) errorEl.textContent = message;
+            else console.warn(`Error element for step ${stepId} not found.`);
+        }
+        function clearAdminError(stepId) {
+            const errorEl = document.getElementById(`errorStep${stepId}`);
+            if (errorEl) errorEl.textContent = '';
+        }
+        function setAdminLoading(stepId, isLoading, elementIdSuffix = '') {
+            const loadingEl = document.getElementById(`loadingStep${stepId}${elementIdSuffix}`);
+            if (loadingEl) loadingEl.style.display = isLoading ? 'block' : 'none';
+            let submitButton;
+            if (stepId === 1) submitButton = document.getElementById('btnGetOtp');
+            else if (stepId === 2) submitButton = document.getElementById('btnVerifyAdminOtp');
+            
+            if (submitButton) submitButton.disabled = isLoading;
+        }
+        
+        function getTodayPersianDateString() {
+            const today = new Date();
+            const formatter = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                calendar: 'persian'
+            });
+            const parts = formatter.formatToParts(today);
+            let pYear = '', pMonth = '', pDay = '';
+            parts.forEach(part => {
+                if (part.type === 'year') pYear = part.value;
+                else if (part.type === 'month') pMonth = part.value;
+                else if (part.type === 'day') pDay = part.value;
+            });
+            return `${toPersianNum(pYear)}/${toPersianNum(pMonth.padStart(2, '0'))}/${toPersianNum(pDay.padStart(2, '0'))}`;
+        }
+
+        function populateCityDropdown() {
+            const datalist = document.getElementById('cities');
+            if(!datalist) return;
+            datalist.innerHTML = ''; // Clear previous options
+            for (const province in provincesAndCities) {
+                provincesAndCities[province].forEach(city => {
+                    const option = document.createElement('option');
+                    option.value = city;
+                    datalist.appendChild(option);
+                });
+            }
+        }
+
+
+        async function initializeAdminFirebase() {
+            try {
+                console.log("Initializing Firebase for Admin Panel with config:", firebaseConfig);
+                const app = initializeApp(firebaseConfig, "reservationPanelApp"); 
+                db = initializeFirestore(app, {
+                    host: "firestore.fanoos.me", // <-- آدرس پراکسی شما در کلودفلر
+                    ssl: true // Keep this as true
+                });
+                auth = getAuth(app); 
+                setLogLevel('debug'); 
+                console.log("Admin Panel App ID (for its own data like OTPs):", adminPanelAppId);
+                console.log("Primary reservationUser App ID (for salon/booking data):", primaryReservationUserAppId);
+                console.log("Fallback reservationUser App ID:", fallbackReservationUserAppId);
+
+
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentAdminUser = user;
+                        console.log("Admin Panel: User authenticated:", currentAdminUser.uid, "isAnonymous:", currentAdminUser.isAnonymous);
+                    } else {
+                        console.log("Admin Panel: No user found, attempting to establish session.");
+                        try {
+                             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { 
+                                await signInWithCustomToken(auth, __initial_auth_token);
+                             } else {
+                                await signInAnonymously(auth);
+                             }
+                        } catch (authError) {
+                            console.error("Admin Panel: Error during sign-in attempt:", authError);
+                            displayAdminError(1, "خطا در فرآیند احراز هویت پنل مدیریت.");
+                        }
+                    }
+                    
+                    if (auth.currentUser && !isAdminAuthReady) { 
+                        isAdminAuthReady = true;
+                        console.log("Admin Panel: Auth is ready.");
+                    }
+                });
+            } catch (e) {
+                console.error("Admin Panel: Firebase initialization error:", e);
+                displayAdminError(1, "خطا در راه اندازی اولیه پنل مدیریت.");
+                isAdminAuthReady = true; 
+            }
+        }
+        
+        // --- Step 1: Manager Mobile Input ---
+        async function handleGetOtp() {
+            clearAdminError(1);
+            managerMobileNumber = toEnglishNum(document.getElementById('managerMobileInput').value.trim());
+
+            if (!managerMobileNumber.match(/^09\d{9}$/)) {
+                displayAdminError(1, "لطفا شماره موبایل معتبر مدیر را وارد کنید.");
+                return;
+            }
+             if (!db || !isAdminAuthReady || !auth.currentUser) {
+                displayAdminError(1, "سرویس پایگاه داده یا احراز هویت هنوز آماده نیست.");
+                return;
+            }
+            setAdminLoading(1, true);
+
+            const tempGeneratedOtp = String(Math.floor(1000 + Math.random() * 9000));
+            console.log("Generated OTP for admin:", tempGeneratedOtp);
+            
+            const otpDocRef = doc(db, 'artifacts', adminPanelAppId, 'public', 'data', 'adminOtps', managerMobileNumber);
+            const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MINUTES_ADMIN * 60 * 1000);
+
+            try {
+                await setDoc(otpDocRef, {
+                    otpCode: tempGeneratedOtp,
+                    createdAt: serverTimestamp(),
+                    expiresAt: Timestamp.fromDate(expiresAt)
+                });
+                console.log(`Admin OTP ${tempGeneratedOtp} saved for ${managerMobileNumber}, expires at ${expiresAt.toISOString()}`);
+                
+                document.getElementById('adminOtpSentTo').textContent = `کد تایید به شماره ${toPersianNum(managerMobileNumber)} ارسال شد (نمایش موقت).`;
+                document.getElementById('generatedOtpDisplay').textContent = `کد تایید شما: ${toPersianNum(tempGeneratedOtp)}`;
+                document.getElementById('adminOtpInput').value = ''; 
+                navigateToAdminStep(2); 
+            } catch (e) {
+                console.error("Error saving admin OTP to Firestore:", e);
+                displayAdminError(1, "خطا در ارسال کد تایید. لطفا دوباره تلاش کنید.");
+            } finally {
+                setAdminLoading(1, false);
+            }
+        }
+        function setupStep1() {
+            const btnGetOtp = document.getElementById('btnGetOtp');
+            if (btnGetOtp) btnGetOtp.onclick = handleGetOtp;
+            else console.error("Button 'btnGetOtp' not found in setupStep1");
+        }
+
+        // --- Step 2: OTP Verification ---
+        async function handleAdminOtpVerification() {
+            clearAdminError(2);
+            setAdminLoading(2, true);
+            const enteredOtp = toEnglishNum(document.getElementById('adminOtpInput').value.trim());
+
+            if (!db || !isAdminAuthReady || !auth.currentUser) {
+                 displayAdminError(2, "پایگاه داده یا احراز هویت آماده نیست.");
+                 setAdminLoading(2, false);
+                 return;
+            }
+
+            const otpDocRef = doc(db, 'artifacts', adminPanelAppId, 'public', 'data', 'adminOtps', managerMobileNumber);
+            try {
+                const otpDocSnap = await getDoc(otpDocRef);
+                if (!otpDocSnap.exists()) {
+                    displayAdminError(2, "کد تایید نامعتبر یا منقضی شده است.");
+                    setAdminLoading(2, false);
+                    return;
+                }
+
+                const otpData = otpDocSnap.data();
+                const storedOtpCode = otpData.otpCode;
+                const expiresAtTimestamp = otpData.expiresAt;
+
+                if (Timestamp.now().seconds > expiresAtTimestamp.seconds) {
+                    displayAdminError(2, "کد تایید منقضی شده است.");
+                    await deleteDoc(otpDocRef); 
+                    setAdminLoading(2, false);
+                    return;
+                }
+
+                if (enteredOtp !== storedOtpCode) { 
+                    displayAdminError(2, "کد تایید نامعتبر است."); 
+                    setAdminLoading(2, false); 
+                    return;
+                }
+                
+                await deleteDoc(otpDocRef); 
+                console.log("Admin OTP verified and deleted for", managerMobileNumber);
+                
+                await fetchAndDisplayManagedSalons(); 
+            } catch (e) {
+                console.error("Error during admin OTP verification:", e);
+                displayAdminError(2, "خطا در پردازش کد تایید: " + e.message);
+            } finally {
+                setAdminLoading(2, false);
+            }
+        }
+        function setupStep2() {
+            const btnBackToMobileInput = document.getElementById('btnBackToMobileInput');
+            if (btnBackToMobileInput) btnBackToMobileInput.onclick = () => navigateToAdminStep(1);
+            else console.error("Button 'btnBackToMobileInput' not found in setupStep2");
+            
+            const btnVerifyAdminOtp = document.getElementById('btnVerifyAdminOtp');
+            if (btnVerifyAdminOtp) btnVerifyAdminOtp.onclick = handleAdminOtpVerification;
+            else console.error("Button 'btnVerifyAdminOtp' not found in setupStep2");
+        }
+
+        // --- Step 3: Display Managed Salons / Start Business ---
+        async function fetchAndDisplayManagedSalons(forceShowList = false) { 
+            if (!db || !isAdminAuthReady || !auth.currentUser || !managerMobileNumber) {
+                displayAdminError('3_salon_list', "اطلاعات لازم برای بارگذاری سالن‌ها موجود نیست."); 
+                displayAdminError('3_start_business', "اطلاعات لازم برای بارگذاری سالن‌ها موجود نیست.");
+                return;
+            }
+            setAdminLoading(3, true, 'Salons'); 
+            clearAdminError('3_salon_list'); 
+            clearAdminError('3_start_business');
+
+            const managedSalonListContainer = document.getElementById('managedSalonListContainer');
+            if (managedSalonListContainer) managedSalonListContainer.innerHTML = ''; 
+            
+            managedSalons = []; 
+            activeReservationUserAppId = primaryReservationUserAppId; 
+
+            let salonsQuery;
+            
+            async function getSalonsData(appIdToUse) {
+                const tempSalons = [];
+                const salonsPath = `artifacts/${appIdToUse}/public/data/salons`;
+                console.log(`Fetching salons from: ${salonsPath} for manager mobile: ${managerMobileNumber} using appId: ${appIdToUse}`);
+                if (managerMobileNumber === '09122136866') { 
+                    salonsQuery = query(collection(db, 'artifacts', appIdToUse, 'public', 'data', 'salons'));
+                } else {
+                    salonsQuery = query(collection(db, 'artifacts', appIdToUse, 'public', 'data', 'salons'), where("mobile", "==", managerMobileNumber));
+                }
+                const salonSnapshot = await getDocs(salonsQuery);
+                salonSnapshot.forEach(doc => {
+                    tempSalons.push({ id: doc.id, ...doc.data(), sourceAppId: appIdToUse });
+                });
+                return tempSalons;
+            }
+            
+            try {
+                managedSalons = await getSalonsData(primaryReservationUserAppId);
+                if (managedSalons.length > 0) {
+                    activeReservationUserAppId = primaryReservationUserAppId;
+                } else if (fallbackReservationUserAppId) {
+                    console.log(`No salons found with primary appId (${primaryReservationUserAppId}). Trying fallback: ${fallbackReservationUserAppId}`);
+                    managedSalons = await getSalonsData(fallbackReservationUserAppId);
+                    if (managedSalons.length > 0) {
+                        activeReservationUserAppId = fallbackReservationUserAppId;
+                    }
+                }
+                console.log("Managed salons found (after potential fallback):", managedSalons.length, "using activeReservationUserAppId:", activeReservationUserAppId);
+
+                if (managedSalons.length > 0) {
+                    const todayPersian = getTodayPersianDateString();
+                    console.log("Today's Persian date for booking count:", todayPersian);
+
+                    for (const salon of managedSalons) {
+                        const bookingsColRef = collection(db, 'artifacts', salon.sourceAppId, 'public', 'data', 'bookings');
+                        const allBookingsForSalonQuery = query(bookingsColRef, where("salonId", "==", salon.id));
+                        try {
+                            const bookingsSnapshot = await getDocs(allBookingsForSalonQuery);
+                            let futureBookingsCount = 0;
+                            bookingsSnapshot.forEach(doc => {
+                                const bookingData = doc.data();
+                                if (bookingData.date && bookingData.date >= todayPersian && bookingData.status !== 'cancelled' && bookingData.status !== 'completed') {
+                                    futureBookingsCount++;
+                                }
+                            });
+                            salon.futureBookingsCount = futureBookingsCount;
+                            console.log(`Salon ${salon.name} (from ${salon.sourceAppId}) has ${salon.futureBookingsCount} active bookings.`);
+                        } catch (bookingError) {
+                            console.error(`Error fetching future bookings for salon ${salon.id} from ${salon.sourceAppId}:`, bookingError);
+                            salon.futureBookingsCount = "خطا"; 
+                        }
+                    }
+                    populateManagedSalonsList();
+                    navigateToAdminStep('step3_salon_list'); 
+                } else { 
+                    document.getElementById('startBusinessMobileNumber').textContent = toPersianNum(managerMobileNumber);
+                    navigateToAdminStep('step3_start_business'); 
+                }
+            } catch (e) {
+                console.error("Error fetching managed salons:", e);
+                displayAdminError('3_salon_list', "خطا در بارگذاری لیست سالن‌های شما: " + e.message);
+                displayAdminError('3_start_business', "خطا در بارگذاری لیست سالن‌های شما: " + e.message);
+                navigateToAdminStep('step3_start_business'); 
+            } finally {
+                setAdminLoading(3, false, 'Salons'); 
+            }
+        }
+
+
+        function populateManagedSalonsList() {
+            const container = document.getElementById('managedSalonListContainer');
+            if (!container) return;
+            container.innerHTML = ''; 
+            if (managedSalons.length === 0 && managerMobileNumber !== '09122136866') { 
+                container.innerHTML = '<p class="text-center text-gray-500">شما مدیریت هیچ سالنی را بر عهده ندارید.</p>';
+            }
+             managedSalons.forEach(salon => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                let bookingsInfo = salon.futureBookingsCount !== undefined ? 
+                    `<p class="text-xs text-indigo-500 mt-1">رزروهای جاری: ${toPersianNum(salon.futureBookingsCount)}</p>` : 
+                    '<p class="text-xs text-gray-400 mt-1">در حال شمارش رزروها...</p>';
+                let approvalStatusText = '';
+                if (managerMobileNumber === '09122136866') { 
+                    approvalStatusText = salon.isApproved ? 
+                        '<span class="status-badge status-approved">تایید شده</span>' : 
+                        '<span class="status-badge status-pending">در انتظار تایید</span>';
+                } else { 
+                     approvalStatusText = salon.isApproved ? 
+                        '<span class="status-badge status-approved">تایید شده</span>' : 
+                        '<span class="status-badge status-pending">در انتظار تایید</span>';
+                }
+
+
+                div.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-lg font-semibold text-pink-700">${salon.name}</h3>
+                            <p class="text-sm text-gray-600">${salon.address}</p>
+                            ${bookingsInfo}
+                        </div>
+                        ${approvalStatusText ? `<div class="mt-1">${approvalStatusText}</div>` : ''}
+                    </div>
+                    `;
+                div.onclick = () => handleManagedSalonSelect(salon);
+                container.appendChild(div);
+            });
+        }
+
+        function handleManagedSalonSelect(salon) {
+            selectedManagedSalon = salon;
+            activeReservationUserAppId = salon.sourceAppId; 
+            console.log("Selected salon:", selectedManagedSalon.name, "from appId:", activeReservationUserAppId);
+            populateManagementOptionsStep4();
+            navigateToAdminStep(4);
+        }
+
+        function resetAdminAppToLogin() {
+            managerMobileNumber = '';
+            managedSalons = [];
+            selectedManagedSalon = null;
+            allBookingsForSelectedSalon = [];
+            document.getElementById('managerMobileInput').value = '';
+            document.getElementById('adminOtpInput').value = '';
+            const bookingsTableBody = document.getElementById('bookingsTableBody');
+            if (bookingsTableBody) bookingsTableBody.innerHTML = '';
+            navigateToAdminStep(1); 
+        }
+
+
+        function setupStep3() { 
+            const btnLogoutSalonList = document.getElementById('btnAdminLogoutFromSalonList');
+            if(btnLogoutSalonList) btnLogoutSalonList.onclick = resetAdminAppToLogin;
+            else console.error("Button 'btnAdminLogoutFromSalonList' not found in setupStep3");
+
+            const btnDefineServices = document.getElementById('btnDefineServices');
+            if(btnDefineServices) btnDefineServices.onclick = () => {
+                cameFromSalonList = false; 
+                selectedManagedSalon = { 
+                    mobile: managerMobileNumber, 
+                    isNew: true, 
+                    categories: [],
+                    isApproved: false, 
+                    sourceAppId: primaryReservationUserAppId 
+                };
+                activeReservationUserAppId = primaryReservationUserAppId;
+                navigateToAdminStep(7); 
+                populateSalonUpdateFormStep7();
+            };
+             else console.error("Button 'btnDefineServices' not found in setupStep3");
+
+            const btnLogoutStartBusiness = document.getElementById('btnAdminLogoutFromStartBusiness');
+            if(btnLogoutStartBusiness) btnLogoutStartBusiness.onclick = resetAdminAppToLogin;
+            else console.error("Button 'btnAdminLogoutFromStartBusiness' not found in setupStep3");
+            
+            const btnAddNewSalon = document.getElementById('btnAddNewSalonFromList');
+            if (btnAddNewSalon) btnAddNewSalon.onclick = () => {
+                 cameFromSalonList = true; 
+                 selectedManagedSalon = { 
+                    mobile: managerMobileNumber, 
+                    isNew: true, 
+                    categories: [],
+                    isApproved: false,
+                    sourceAppId: primaryReservationUserAppId 
+                };
+                activeReservationUserAppId = primaryReservationUserAppId;
+                navigateToAdminStep(7);
+                populateSalonUpdateFormStep7();
+            };
+             else console.error("Button 'btnAddNewSalonFromList' not found in setupStep3");
+        }
+
+        // --- Step 4: Management Options ---
+        function populateManagementOptionsStep4() {
+            if (!selectedManagedSalon) {
+                console.warn("populateManagementOptionsStep4 called without a selected salon. Redirecting.");
+                if (managedSalons.length > 0) { 
+                    navigateToAdminStep('step3_salon_list'); 
+                } else { 
+                    navigateToAdminStep('step3_start_business');
+                }
+                return;
+            }
+            document.getElementById('managementOptionsPageTitle').textContent = selectedManagedSalon.name;
+            const backButton = document.getElementById('btnBackToSalonListOrLogin');
+            if (backButton) backButton.textContent = "بازگشت به لیست سالنها"; 
+        }
+
+        function setupStep4() {
+            document.getElementById('btnManageBookings').onclick = () => {
+                if (!selectedManagedSalon) return;
+                document.getElementById('bookingsPageSalonName').textContent = selectedManagedSalon.name || selectedManagedSalon.id;
+                allBookingsForSelectedSalon = []; 
+                document.getElementById('bookingsTableBody').innerHTML = ''; 
+                activeBookingTab = 'current'; 
+                updateBookingTabs();
+                fetchBookingsForSelectedSalon(); 
+                navigateToAdminStep(5); 
+            };
+            
+            document.getElementById('btnManageCustomers').onclick = () => {
+                if (!selectedManagedSalon) return;
+                document.getElementById('customersPageSalonName').textContent = selectedManagedSalon.name || selectedManagedSalon.id; 
+                fetchAndDisplayCustomersForSalon();
+                navigateToAdminStep(6); 
+            };
+            
+            document.getElementById('btnUpdateSalonInfo').onclick = () => {
+                 if (!selectedManagedSalon) return;
+                document.getElementById('updateSalonPageSalonName').textContent = selectedManagedSalon.name;
+                document.getElementById('updateSalonPageSubtitle').textContent = "بروزرسانی اطلاعات سالن";
+                populateSalonUpdateFormStep7();
+                navigateToAdminStep(7);
+            };
+
+            document.getElementById('btnManageCalendar').onclick = () => {
+                if (!selectedManagedSalon) return;
+                document.getElementById('calendarPageSalonName').textContent = selectedManagedSalon.name;
+                populateCalendarSettings();
+                navigateToAdminStep('step8_calendar');
+            };
+
+            document.getElementById('btnManageCustomerClub').onclick = () => {
+                 if (!selectedManagedSalon) return;
+                document.getElementById('customerClubPageSalonName').textContent = selectedManagedSalon.name;
+                populateCustomerClubSettings();
+                navigateToAdminStep('step9_customer_club');
+            };
+            
+            document.getElementById('btnManageReviews').onclick = () => {
+                if (!selectedManagedSalon) return;
+                document.getElementById('reviewsPageSalonName').textContent = selectedManagedSalon.name;
+                fetchAndDisplayReviews();
+                navigateToAdminStep('step10_reviews');
+            };
+            
+            document.getElementById('btnSendGroupMessage').onclick = () => {
+                showMessage("ویژگی 'ارسال پیام گروهی' هنوز پیاده‌سازی نشده است.");
+            };
+
+            document.getElementById('btnBackToSalonListOrLogin').onclick = async () => {
+                await fetchAndDisplayManagedSalons(true); 
+            };
+        }
+
+
+        // --- Step 5: Display Bookings ---
+        function updateBookingTabs() {
+            const currentBtn = document.getElementById('btnCurrentBookingsTab');
+            const completedBtn = document.getElementById('btnCompletedBookingsTab');
+            const cancelledBtn = document.getElementById('btnCancelledBookingsTab');
+            if(!currentBtn || !completedBtn || !cancelledBtn) return;
+            
+            currentBtn.classList.remove('active');
+            completedBtn.classList.remove('active');
+            cancelledBtn.classList.remove('active');
+            
+            const remainingHeader = document.getElementById('header-remaining');
+
+            if (activeBookingTab === 'current') {
+                currentBtn.classList.add('active');
+                remainingHeader.textContent = 'مانده';
+            } else if (activeBookingTab === 'completed') {
+                completedBtn.classList.add('active');
+                remainingHeader.textContent = 'پرداخت حضوری';
+            } else { // cancelled
+                cancelledBtn.classList.add('active');
+                remainingHeader.textContent = 'مانده';
+            }
+        }
+
+        async function fetchBookingsForSelectedSalon() { 
+            if (!db || !isAdminAuthReady || !auth.currentUser || !selectedManagedSalon) {
+                displayAdminError(5, "اطلاعات سالن انتخاب شده برای بارگذاری رزروها موجود نیست."); 
+                return;
+            }
+            setAdminLoading(5, true, 'Bookings'); 
+            clearAdminError(5); 
+            const bookingsTableBody = document.getElementById('bookingsTableBody');
+            bookingsTableBody.innerHTML = ''; 
+            document.getElementById('noBookingsMessage').style.display = 'none';
+            let fetchedBookings = []; 
+
+            const bookingsPath = `artifacts/${activeReservationUserAppId}/public/data/bookings`; 
+            console.log(`Fetching ALL bookings from: ${bookingsPath} for selected salonId: ${selectedManagedSalon.id} to filter client-side.`);
+            
+            try {
+                const bookingsColRef = collection(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'bookings');
+                const q = query(bookingsColRef, where("salonId", "==", selectedManagedSalon.id));
+                const querySnapshot = await getDocs(q);
+                
+                querySnapshot.forEach(doc => {
+                    fetchedBookings.push({ salonName: selectedManagedSalon.name, ...doc.data(), docId: doc.id });
+                });
+                
+                if (activeBookingTab === 'current') { 
+                    allBookingsForSelectedSalon = fetchedBookings.filter(b => !b.status || (b.status !== 'cancelled' && b.status !== 'completed'));
+                } else if (activeBookingTab === 'completed') {
+                    allBookingsForSelectedSalon = fetchedBookings.filter(b => b.status === 'completed');
+                } else { // 'cancelled'
+                    allBookingsForSelectedSalon = fetchedBookings.filter(b => b.status === 'cancelled');
+                }
+                
+                // Sort bookings
+                allBookingsForSelectedSalon.sort((a, b) => {
+                    const dateA = a.bookingTimestamp ? new Date(a.bookingTimestamp) : new Date(0);
+                    const dateB = b.bookingTimestamp ? new Date(b.bookingTimestamp) : new Date(0);
+                    // For all tabs, sort by most recent booking time first (descending)
+                    return dateB - dateA; 
+                });
+                
+                if (allBookingsForSelectedSalon.length === 0) {
+                    document.getElementById('noBookingsMessage').style.display = 'block';
+                } else {
+                    populateBookingsTable(allBookingsForSelectedSalon);
+                }
+
+            } catch (e) {
+                console.error("Error fetching bookings for selected salon:", e);
+                displayAdminError(5, "خطا در بارگذاری رزروها: " + e.message); 
+            } finally {
+                setAdminLoading(5, false, 'Bookings'); 
+            }
+        }
+        
+        function populateBookingsTable(bookings) {
+            const bookingsTableBody = document.getElementById('bookingsTableBody');
+            bookingsTableBody.innerHTML = ''; 
+            if (bookings.length === 0) {
+                document.getElementById('noBookingsMessage').style.display = 'block';
+                return;
+            }
+            document.getElementById('noBookingsMessage').style.display = 'none';
+
+            bookings.forEach(booking => {
+                const row = bookingsTableBody.insertRow();
+                row.style.opacity = (booking.status === 'cancelled' || booking.status === 'completed') ? '0.6' : '1';
+                
+                const actionsCell = row.insertCell();
+                actionsCell.className = 'flex flex-col gap-1';
+
+                const isCompleted = booking.status === 'completed';
+
+                if (activeBookingTab === 'current') {
+                    actionsCell.innerHTML = `
+                        <button class="btn btn-edit btn-small btn-edit-booking" data-booking-id="${booking.docId}">ویرایش</button>
+                        <button class="btn btn-danger btn-small btn-cancel-booking" data-booking-id="${booking.docId}">لغو کردن</button>
+                        <button class="btn btn-success btn-small btn-complete-booking" data-booking-id="${booking.docId}">اتمام کار</button>
+                    `;
+                } else if (activeBookingTab === 'completed') {
+                     actionsCell.innerHTML = `
+                        <button class="btn btn-edit btn-small" disabled>ویرایش</button>
+                        <button class="btn btn-danger btn-small" disabled>لغو کردن</button>
+                    `;
+                } else if (activeBookingTab === 'cancelled') {
+                    actionsCell.innerHTML = `
+                        <button class="btn btn-success btn-small btn-reactivate-booking" data-booking-id="${booking.docId}">فعال سازی</button>
+                    `;
+                }
+
+                const statusCell = row.insertCell();
+                if (booking.status === 'cancelled') {
+                    statusCell.innerHTML = `<span class="status-badge status-cancelled">لغو شده</span>`;
+                } else if (booking.status === 'completed') {
+                    statusCell.innerHTML = `<span class="status-badge status-completed">پایان یافته</span>`;
+                } else {
+                     statusCell.innerHTML = `<span class="status-badge status-approved">فعال</span>`;
+                }
+
+                row.insertCell().textContent = booking.customerName || 'نامشخص';
+                row.insertCell().textContent = toPersianNum(booking.customerPhoneNumber);
+                row.insertCell().textContent = toPersianNum(booking.date);
+                row.insertCell().textContent = toPersianNum(booking.startTime);
+                row.insertCell().textContent = toPersianNum(booking.endTime);
+                
+                const servicesCell = row.insertCell();
+                if (booking.isManual) {
+                    servicesCell.textContent = 'رزرو دستی';
+                } else if (booking.services && booking.services.length > 0) {
+                    servicesCell.innerHTML = booking.services.map(s => `<div>${s.name} (${toPersianNum(s.durationHours)} ساعت)</div>`).join('');
+                } else {
+                    servicesCell.textContent = '-';
+                }
+                row.insertCell().textContent = `${toPersianNum(booking.totalOriginalPrice?.toLocaleString() || 0)} تومان`; 
+                row.insertCell().textContent = `${toPersianNum(booking.finalPrice?.toLocaleString() || 0)} تومان`;
+                row.insertCell().textContent = `${toPersianNum(booking.depositAmount?.toLocaleString() || 0)} تومان`;
+                
+                const lastDataCell = row.insertCell(); // For 'remaining' or 'finalPaymentReceived'
+                if (booking.status === 'completed') {
+                    lastDataCell.textContent = `${toPersianNum(booking.finalPaymentReceived?.toLocaleString() || 0)} تومان`;
+                } else {
+                    lastDataCell.textContent = `${toPersianNum(booking.remainingAmount?.toLocaleString() || 0)} تومان`;
+                }
+
+                const bookingTime = booking.bookingTimestamp ? 
+                    new Date(booking.bookingTimestamp).toLocaleString('fa-IR-u-nu-latn', { dateStyle: 'short', timeStyle: 'short'}) : '-';
+                row.insertCell().textContent = toPersianNum(bookingTime);
+            });
+        }
+        
+        async function handleManualBookingSubmit(event) {
+            event.preventDefault();
+            const errorEl = document.getElementById('manualBookingError');
+            errorEl.textContent = '';
+
+            const name = document.getElementById('manualCustomerName').value.trim();
+            const mobile = toEnglishNum(document.getElementById('manualCustomerMobile').value.trim());
+            const date = toEnglishNum(document.getElementById('manualBookingDate').value.trim());
+            const startTime = document.getElementById('manualStartTime').value;
+            const endTime = document.getElementById('manualEndTime').value;
+
+            if (!name || !mobile || !date || !startTime || !endTime) {
+                errorEl.textContent = "تمام فیلدها الزامی هستند.";
+                return;
+            }
+             if (!mobile.match(/^09\d{9}$/)) {
+                errorEl.textContent = "فرمت شماره موبایل صحیح نیست.";
+                return;
+            }
+            if (startTime >= endTime) {
+                errorEl.textContent = "ساعت پایان باید بعد از ساعت شروع باشد.";
+                return;
+            }
+            
+            const bookingData = {
+                salonId: selectedManagedSalon.id, 
+                customerName: name,
+                customerPhoneNumber: mobile,
+                date: toPersianNum(date),
+                startTime: startTime,
+                endTime: endTime,
+                isManual: true,
+                bookingTimestamp: new Date().toISOString(),
+                services: [],
+                totalOriginalPrice: 0,
+                discountApplied: 0,
+                finalPrice: 0,
+                depositAmount: 0,
+                remainingAmount: 0,
+                totalDurationHours: 0,
+                userId: 'manual_booking'
+            };
+
+            try {
+                const bookingsColRef = collection(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'bookings');
+                await addDoc(bookingsColRef, bookingData);
+                showMessage("رزرو دستی با موفقیت ثبت شد.");
+                document.getElementById('manualBookingModal').style.display = 'none';
+                document.getElementById('manualBookingForm').reset();
+                await fetchBookingsForSelectedSalon(); // Refresh the list
+            } catch(e) {
+                console.error("Error saving manual booking:", e);
+                errorEl.textContent = "خطا در ثبت رزرو: " + e.message;
+            }
+        }
+        
+        function openEditBookingModal(bookingId) {
+            const booking = allBookingsForSelectedSalon.find(b => b.docId === bookingId);
+            if (!booking) {
+                showMessage("خطا: اطلاعات رزرو یافت نشد.");
+                return;
+            }
+            
+            document.getElementById('editBookingId').value = bookingId;
+            document.getElementById('editBookingDate').value = toEnglishNum(booking.date);
+            document.getElementById('editStartTime').value = booking.startTime;
+            document.getElementById('editEndTime').value = booking.endTime;
+            document.getElementById('editBookingError').textContent = '';
+            
+            document.getElementById('editBookingModal').style.display = 'flex';
+        }
+        
+        async function handleUpdateBookingSubmit(event) {
+            event.preventDefault();
+            const errorEl = document.getElementById('editBookingError');
+            errorEl.textContent = '';
+            
+            const bookingId = document.getElementById('editBookingId').value;
+            const newDate = toEnglishNum(document.getElementById('editBookingDate').value.trim());
+            const newStartTime = document.getElementById('editStartTime').value;
+            const newEndTime = document.getElementById('editEndTime').value;
+
+            if (!newDate || !newStartTime || !newEndTime) {
+                errorEl.textContent = "تمام فیلدها الزامی هستند.";
+                return;
+            }
+
+            if (newStartTime >= newEndTime) {
+                errorEl.textContent = "ساعت پایان باید بعد از ساعت شروع باشد.";
+                return;
+            }
+            
+            setAdminLoading(5, true, 'Bookings');
+            document.getElementById('editBookingModal').style.display = 'none';
+
+            try {
+                const bookingRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'bookings', bookingId);
+                const updateData = {
+                    date: toPersianNum(newDate),
+                    startTime: newStartTime,
+                    endTime: newEndTime,
+                };
+                
+                // If reactivating, remove the 'cancelled' status by deleting the field
+                const originalBooking = allBookingsForSelectedSalon.find(b => b.docId === bookingId);
+                if (originalBooking && originalBooking.status === 'cancelled') {
+                    updateData.status = deleteField();
+                }
+
+                await firestoreUpdateDoc(bookingRef, updateData);
+                showMessage("رزرو با موفقیت بروزرسانی شد.");
+                await fetchBookingsForSelectedSalon(); // Refresh the list
+            } catch (e) {
+                console.error("Error updating booking:", e);
+                displayAdminError(5, "خطا در بروزرسانی رزرو: " + e.message);
+            } finally {
+                setAdminLoading(5, false, 'Bookings');
+            }
+        }
+
+        async function updateBookingStatus(bookingId, newStatus) {
+            if (!db) return;
+            setAdminLoading(5, true, 'Bookings');
+            try {
+                const bookingRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'bookings', bookingId);
+                await firestoreUpdateDoc(bookingRef, { status: newStatus });
+                showMessage("رزرو با موفقیت لغو شد.");
+                await fetchBookingsForSelectedSalon();
+            } catch (e) {
+                console.error("Error updating booking status:", e);
+                displayAdminError(5, "خطا در بروزرسانی وضعیت رزرو: " + e.message);
+            } finally {
+                setAdminLoading(5, false, 'Bookings');
+            }
+        }
+        
+        async function handleCompleteBookingAction(bookingId) {
+            const booking = allBookingsForSelectedSalon.find(b => b.docId === bookingId);
+            if (!booking) {
+                showMessage("خطا: رزرو یافت نشد.");
+                return;
+            }
+
+            const remaining = booking.remainingAmount || 0;
+            const receivedAmountStr = prompt(`لطفا مبلغ نهایی دریافتی را وارد کنید. مبلغ مانده: ${toPersianNum(remaining.toLocaleString())} تومان`, remaining);
+
+            if (receivedAmountStr === null) {
+                return; // User cancelled the prompt
+            }
+
+            const receivedAmount = parseFloat(toEnglishNum(receivedAmountStr));
+
+            if (isNaN(receivedAmount) || receivedAmount < 0) {
+                showMessage("لطفا مبلغ معتبری وارد کنید.");
+                return;
+            }
+            
+            if (confirm(`آیا از ثبت مبلغ ${toPersianNum(receivedAmount.toLocaleString())} تومان و اتمام این رزرو مطمئن هستید؟`)) {
+                setAdminLoading(5, true, 'Bookings');
+                try {
+                    const bookingRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'bookings', bookingId);
+                    await firestoreUpdateDoc(bookingRef, {
+                        status: 'completed',
+                        remainingAmount: 0,
+                        finalPaymentReceived: receivedAmount
+                    });
+                    showMessage("رزرو با موفقیت به وضعیت 'پایان یافته' تغییر کرد.");
+                    await fetchBookingsForSelectedSalon(); // Refresh list
+                } catch (e) {
+                    console.error("Error completing booking:", e);
+                    displayAdminError(5, "خطا در اتمام رزرو: " + e.message);
+                } finally {
+                    setAdminLoading(5, false, 'Bookings');
+                }
+            }
+        }
+
+
+        function setupStep5() { 
+            document.getElementById('btnBackToManagementOptionsFromBookings').onclick = () => navigateToAdminStep(4); 
+            
+            document.getElementById('btnCurrentBookingsTab').onclick = () => {
+                activeBookingTab = 'current';
+                updateBookingTabs();
+                fetchBookingsForSelectedSalon();
+            };
+
+            document.getElementById('btnCompletedBookingsTab').onclick = () => {
+                activeBookingTab = 'completed';
+                updateBookingTabs();
+                fetchBookingsForSelectedSalon();
+            };
+            
+            document.getElementById('btnCancelledBookingsTab').onclick = () => {
+                activeBookingTab = 'cancelled';
+                updateBookingTabs();
+                fetchBookingsForSelectedSalon();
+            };
+            
+            // Manual Booking Modal Setup
+            document.getElementById('btnOpenManualBookingModal').onclick = () => {
+                document.getElementById('manualBookingModal').style.display = 'flex';
+                document.getElementById('manualBookingForm').reset();
+                document.getElementById('manualBookingError').textContent = '';
+            };
+            document.getElementById('btnCancelManualBooking').onclick = () => {
+                document.getElementById('manualBookingModal').style.display = 'none';
+            };
+            document.getElementById('manualBookingForm').addEventListener('submit', handleManualBookingSubmit);
+            
+            // Edit Booking Modal Setup
+            document.getElementById('btnCancelEditBooking').onclick = () => {
+                document.getElementById('editBookingModal').style.display = 'none';
+            };
+            document.getElementById('editBookingForm').addEventListener('submit', handleUpdateBookingSubmit);
+
+            // Event delegation for action buttons in the bookings table
+            document.getElementById('bookingsTableBody').addEventListener('click', (event) => {
+                const target = event.target;
+                const bookingId = target.dataset.bookingId;
+                if (!bookingId) return;
+
+                if (target.classList.contains('btn-edit-booking')) {
+                    openEditBookingModal(bookingId);
+                } else if (target.classList.contains('btn-cancel-booking')) {
+                    if (confirm('آیا از لغو این رزرو مطمئن هستید؟')) {
+                        updateBookingStatus(bookingId, 'cancelled');
+                    }
+                } else if (target.classList.contains('btn-complete-booking')) {
+                     handleCompleteBookingAction(bookingId);
+                } else if (target.classList.contains('btn-reactivate-booking')) {
+                     openEditBookingModal(bookingId);
+                }
+            });
+        }
+
+        // --- Step 6: Manage Customers ---
+        async function fetchAndDisplayCustomersForSalon() {
+            if (!db || !isAdminAuthReady || !auth.currentUser || !selectedManagedSalon) {
+                displayAdminError(6, "اطلاعات سالن انتخاب شده برای بارگذاری مشتریان موجود نیست.");
+                return;
+            }
+            setAdminLoading(6, true, 'Customers');
+            clearAdminError(6);
+            const customersTableBody = document.getElementById('customersTableBody');
+            customersTableBody.innerHTML = '';
+            document.getElementById('noCustomersMessage').style.display = 'none';
+            
+            let customersData = {}; 
+
+            try {
+                const bookingsColRef = collection(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'bookings');
+                const bookingsQuery = query(bookingsColRef, where("salonId", "==", selectedManagedSalon.id));
+                const bookingsSnapshot = await getDocs(bookingsQuery);
+
+                if (bookingsSnapshot.empty) {
+                    document.getElementById('noCustomersMessage').style.display = 'block';
+                    setAdminLoading(6, false, 'Customers');
+                    return;
+                }
+
+                bookingsSnapshot.forEach(doc => {
+                    const booking = doc.data();
+                    if(booking.status === 'cancelled') return; // Do not count cancelled bookings
+
+                    const phone = booking.customerPhoneNumber;
+                    if (!customersData[phone]) {
+                        customersData[phone] = {
+                            phoneNumber: phone,
+                            name: booking.customerName || 'نامشخص',
+                            visitsToThisSalon: 0,
+                            totalSpentAtThisSalon: 0,
+                            totalDepositsPaidAtThisSalon: 0,
+                            lastBookingDate: '0000/00/00', 
+                        };
+                    }
+                    customersData[phone].visitsToThisSalon++;
+                    customersData[phone].totalSpentAtThisSalon += (booking.finalPrice || 0);
+                    customersData[phone].totalDepositsPaidAtThisSalon += (booking.depositAmount || 0);
+                    if (booking.date > customersData[phone].lastBookingDate) {
+                        customersData[phone].lastBookingDate = booking.date;
+                    }
+                });
+
+                for (const phone in customersData) {
+                    const profileRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'customerProfiles', phone);
+                    const profileSnap = await getDoc(profileRef);
+                    if (profileSnap.exists()) {
+                        const profile = profileSnap.data();
+                        customersData[phone].name = profile.name || customersData[phone].name; 
+                        customersData[phone].referralsCount = profile.referralsCount || 0;
+                        customersData[phone].adminNotesBySalon = profile.adminNotesBySalon || {};
+                    } else {
+                        customersData[phone].referralsCount = 0;
+                        customersData[phone].adminNotesBySalon = {};
+                    }
+                }
+                populateCustomersTable(Object.values(customersData));
+
+            } catch (e) {
+                console.error("Error fetching customers for salon:", e);
+                displayAdminError(6, "خطا در بارگذاری لیست مشتریان: " + e.message);
+            } finally {
+                setAdminLoading(6, false, 'Customers');
+            }
+        }
+
+        async function handleAddOrEditNote(customerPhone) {
+            let currentCustomerProfileData = {};
+            const profileRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'customerProfiles', customerPhone);
+            try {
+                const profileSnap = await getDoc(profileRef);
+                if (profileSnap.exists()) {
+                    currentCustomerProfileData = profileSnap.data();
+                }
+            } catch (e) {
+                console.error("Error fetching customer profile for note:", e);
+                showMessage("خطا در دریافت اطلاعات مشتری.");
+                return;
+            }
+
+            const currentNote = currentCustomerProfileData?.adminNotesBySalon?.[selectedManagedSalon.id] || "";
+            const newNote = prompt(`یادداشت برای مشتری ${toPersianNum(customerPhone)} در سالن ${selectedManagedSalon.name}:`, currentNote);
+
+            if (newNote !== null) { 
+                setAdminLoading(6, true, 'Customers'); 
+                try {
+                    const customerProfileRefToUpdate = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'customerProfiles', customerPhone);
+                    const notesForSalon = currentCustomerProfileData.adminNotesBySalon || {};
+                    notesForSalon[selectedManagedSalon.id] = newNote.trim();
+                    
+                    await setDoc(customerProfileRefToUpdate, { adminNotesBySalon: notesForSalon }, { merge: true }); 
+                    showMessage("یادداشت با موفقیت ذخیره شد.");
+                    await fetchAndDisplayCustomersForSalon(); 
+                } catch (e) {
+                    console.error("Error saving admin note:", e);
+                    showMessage("خطا در ذخیره یادداشت: " + e.message);
+                } finally {
+                    setAdminLoading(6, false, 'Customers');
+                }
+            }
+        }
+
+
+        function populateCustomersTable(customers) {
+            const customersTableBody = document.getElementById('customersTableBody');
+            customersTableBody.innerHTML = '';
+             if (customers.length === 0) {
+                document.getElementById('noCustomersMessage').style.display = 'block';
+                return;
+            }
+            document.getElementById('noCustomersMessage').style.display = 'none';
+
+            customers.forEach(cust => {
+                const row = customersTableBody.insertRow();
+                row.insertCell().textContent = cust.name || 'نامشخص';
+                row.insertCell().textContent = toPersianNum(cust.phoneNumber);
+                row.insertCell().textContent = toPersianNum(cust.visitsToThisSalon || 0);
+                row.insertCell().textContent = `${toPersianNum(cust.totalSpentAtThisSalon?.toLocaleString() || 0)} تومان`;
+                row.insertCell().textContent = `${toPersianNum(cust.totalDepositsPaidAtThisSalon?.toLocaleString() || 0)} تومان`;
+                row.insertCell().textContent = toPersianNum(cust.referralsCount || 0); 
+                row.insertCell().textContent = toPersianNum(cust.lastBookingDate) || '-';
+                
+                const noteCell = row.insertCell();
+                const salonNote = cust.adminNotesBySalon?.[selectedManagedSalon.id] || "";
+                noteCell.textContent = salonNote || '-';
+                noteCell.title = salonNote; 
+                noteCell.style.whiteSpace = "nowrap";
+                noteCell.style.overflow = "hidden";
+                noteCell.style.textOverflow = "ellipsis";
+                noteCell.style.maxWidth = "150px";
+
+
+                const actionsCell = row.insertCell();
+                const btnAddNote = document.createElement('button');
+                btnAddNote.className = 'btn btn-secondary btn-small mr-2';
+                btnAddNote.textContent = salonNote ? 'ویرایش یادداشت' : 'افزودن یادداشت';
+                btnAddNote.onclick = () => handleAddOrEditNote(cust.phoneNumber);
+                actionsCell.appendChild(btnAddNote);
+
+                const btnSendMessage = document.createElement('button');
+                btnSendMessage.className = 'btn btn-info btn-small';
+                btnSendMessage.textContent = 'ارسال پیام';
+                btnSendMessage.onclick = () => showMessage(`ویژگی "ارسال پیام" به ${cust.name || cust.phoneNumber} هنوز پیاده‌سازی نشده است.`);
+                actionsCell.appendChild(btnSendMessage);
+            });
+        }
+        
+        function setupStep6() {
+            const btnBack = document.getElementById('btnBackToManagementOptionsFromCustomers');
+            if(btnBack) btnBack.onclick = () => {
+                navigateToAdminStep(4);
+            };
+            else console.error("Button 'btnBackToManagementOptionsFromCustomers' not found in setupStep6");
+        }
+
+        // --- Step 7: Update Salon Info ---
+        function populateSalonUpdateFormStep7() {
+            if (!selectedManagedSalon) {
+                navigateToAdminStep(4); 
+                return;
+            }
+            const isNewSalon = selectedManagedSalon.isNew || !selectedManagedSalon.id;
+            document.getElementById('updateSalonPageSalonName').textContent = isNewSalon ? "(سالن جدید)" : selectedManagedSalon.name; 
+            document.getElementById('updateSalonPageSubtitle').textContent = isNewSalon ? "تعریف اطلاعات سالن" : "بروزرسانی اطلاعات سالن"; 
+            
+            document.getElementById('editSalonId').value = isNewSalon ? '' : (selectedManagedSalon.id || '');
+            document.getElementById('editSalonId').disabled = !isNewSalon; 
+            document.getElementById('editSalonName').value = selectedManagedSalon.name || '';
+            document.getElementById('editSalonMainCategory').value = selectedManagedSalon.mainCategory || ''; // Set Main Category
+            document.getElementById('editSalonCityInput').value = selectedManagedSalon.city || ''; // Set City
+            document.getElementById('editSalonAddress').value = selectedManagedSalon.address || '';
+            document.getElementById('editSalonPhone').value = selectedManagedSalon.phone || '';
+            document.getElementById('editSalonMobile').value = selectedManagedSalon.mobile || managerMobileNumber; 
+            document.getElementById('editSalonMobile').readOnly = true; 
+            document.getElementById('editSalonManagerName').value = selectedManagedSalon.managerName || '';
+            document.getElementById('editSalonInstagramUrl').value = selectedManagedSalon.instagramUrl || '';
+
+            const approvalStatusDiv = document.getElementById('salonApprovalStatus');
+            const approveButton = document.getElementById('btnApproveSalon');
+            const deleteSalonButton = document.getElementById('btnDeleteSalon');
+            approvalStatusDiv.innerHTML = ''; 
+            approveButton.style.display = 'none';
+            deleteSalonButton.style.display = 'none';
+
+            if (managerMobileNumber === '09122136866' && !isNewSalon) { 
+                if (selectedManagedSalon.isApproved) {
+                    approvalStatusDiv.innerHTML = '<span class="status-badge status-approved">تایید شده</span>';
+                } else {
+                    approvalStatusDiv.innerHTML = '<span class="status-badge status-pending">در انتظار تایید</span>';
+                    approveButton.style.display = 'block';
+                }
+                deleteSalonButton.style.display = 'block';
+            } else if (!isNewSalon) { 
+                 approvalStatusDiv.innerHTML = selectedManagedSalon.isApproved ? 
+                    '<span class="status-badge status-approved">تایید شده</span>' : 
+                    '<span class="status-badge status-pending">در انتظار تایید</span>';
+            }
+
+
+            document.getElementById('categoriesAndServicesSection').style.display = isNewSalon ? 'none' : 'block';
+            document.getElementById('btnAddSalonCategory').style.display = isNewSalon ? 'none' : 'block';
+
+            if (!isNewSalon) {
+                renderCategoriesForManagement();
+            } else {
+                 document.getElementById('categoriesManagementContainer').innerHTML = '<p class="text-sm text-gray-500">ابتدا اطلاعات پایه سالن را ذخیره کنید تا بتوانید دسته‌بندی‌ها و خدمات را اضافه نمایید.</p>';
+            }
+
+            const backButton = document.getElementById('btnBackToManagementOptionsFromUpdate');
+            if (isNewSalon) {
+                if (cameFromSalonList) { 
+                    backButton.textContent = "بازگشت به لیست سالنها";
+                    backButton.onclick = () => navigateToAdminStep('step3_salon_list');
+                } else { 
+                    backButton.textContent = "خروج کامل";
+                    backButton.onclick = resetAdminAppToLogin;
+                }
+            } else { 
+                backButton.textContent = "بازگشت به گزینه‌ها";
+                backButton.onclick = () => navigateToAdminStep(4);
+            }
+        }
+
+        async function handleSaveSalonBaseInfo() {
+            clearAdminError('7Base');
+            const mainCategory = document.getElementById('editSalonMainCategory').value;
+            const city = document.getElementById('editSalonCityInput').value.trim();
+
+            if (!mainCategory) {
+                displayAdminError('7Base', "لطفا دسته بندی را انتخاب کنید.");
+                return;
+            }
+            if (!city) {
+                displayAdminError('7Base', "لطفا شهر را انتخاب کنید.");
+                return;
+            }
+
+
+            if (!db || !auth.currentUser) { 
+                displayAdminError('7Base', "سرویس پایگاه داده یا احراز هویت آماده نیست.");
+                return;
+            }
+            setAdminLoading(7, true, 'Base');
+            
+            const isNewSalon = !selectedManagedSalon.id || selectedManagedSalon.isNew;
+            let salonIdToSave = selectedManagedSalon.id;
+            const originalName = selectedManagedSalon.name; 
+
+            if (isNewSalon) {
+                salonIdToSave = document.getElementById('editSalonId').value.trim();
+                if (!salonIdToSave) {
+                    displayAdminError('7Base', "شناسه سالن (انگلیسی) الزامی است.");
+                    setAdminLoading(7, false, 'Base');
+                    return;
+                }
+                if (/\s/.test(salonIdToSave) || !/^[a-zA-Z0-9-_]+$/.test(salonIdToSave)) {
+                     displayAdminError('7Base', "شناسه سالن فقط می‌تواند شامل حروف انگلیسی، اعداد، خط تیره و زیرخط باشد و نباید فاصله داشته باشد.");
+                     setAdminLoading(7, false, 'Base');
+                     return;
+                }
+            }
+            
+            const salonDataToSave = {
+                name: document.getElementById('editSalonName').value.trim(),
+                address: document.getElementById('editSalonAddress').value.trim(),
+                phone: document.getElementById('editSalonPhone').value.trim(), 
+                mobile: managerMobileNumber, 
+                managerName: document.getElementById('editSalonManagerName').value.trim(),
+                instagramUrl: document.getElementById('editSalonInstagramUrl').value.trim(),
+                mainCategory: mainCategory,
+                city: city,
+                salonId: salonIdToSave,
+                isApproved: isNewSalon ? false : (selectedManagedSalon.isApproved || false) 
+            };
+
+            if (!salonDataToSave.name) {
+                displayAdminError('7Base', "نام سالن نمی‌تواند خالی باشد.");
+                setAdminLoading(7, false, 'Base');
+                return;
+            }
+            
+            if (!isNewSalon && managerMobileNumber !== '09122136866' && salonDataToSave.name !== originalName) {
+                salonDataToSave.isApproved = false;
+                showMessage("نام سالن تغییر کرد. سالن مجدداً نیازمند تایید ادمین است.");
+            }
+            
+            try {
+                const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', salonIdToSave);
+                
+                if (isNewSalon) {
+                    const existingSalonSnap = await getDoc(salonDocRef);
+                    if (existingSalonSnap.exists()) {
+                        displayAdminError('7Base', `سالن با شناسه '${salonIdToSave}' از قبل موجود است. لطفا شناسه دیگری انتخاب کنید.`);
+                        setAdminLoading(7, false, 'Base');
+                        return;
+                    }
+                    await setDoc(salonDocRef, { ...salonDataToSave, categories: [] }); 
+                    
+                    selectedManagedSalon.id = salonIdToSave; 
+                    selectedManagedSalon.isNew = false; 
+                    selectedManagedSalon.sourceAppId = activeReservationUserAppId; 
+                    Object.assign(selectedManagedSalon, salonDataToSave); 
+                    if (!selectedManagedSalon.categories) {
+                        selectedManagedSalon.categories = [];
+                    }
+                    if (managerMobileNumber !== '09122136866' && !managedSalons.find(s => s.id === salonIdToSave && s.sourceAppId === activeReservationUserAppId)) {
+                         const newSalonForList = JSON.parse(JSON.stringify(selectedManagedSalon));
+                         newSalonForList.futureBookingsCount = 0; 
+                         managedSalons.push(newSalonForList);
+                    }
+                    document.getElementById('managementOptionsPageTitle').textContent = selectedManagedSalon.name; 
+                } else { 
+                    await firestoreUpdateDoc(salonDocRef, salonDataToSave);
+                    Object.assign(selectedManagedSalon, salonDataToSave);
+                }
+                
+                populateSalonUpdateFormStep7(); 
+                showMessage("اطلاعات پایه سالن با موفقیت بروزرسانی شد.");
+                
+                const backButton = document.getElementById('btnBackToManagementOptionsFromUpdate');
+                backButton.textContent = "بازگشت به گزینه‌ها";
+                backButton.onclick = () => navigateToAdminStep(4);
+
+
+            } catch (e) {
+                console.error("Error updating salon base info:", e);
+                displayAdminError('7Base', "خطا در بروزرسانی اطلاعات پایه: " + e.message);
+            } finally {
+                setAdminLoading(7, false, 'Base');
+            }
+        }
+
+        async function handleApproveSalon() {
+            if (!db || !selectedManagedSalon || !selectedManagedSalon.id || !auth.currentUser || managerMobileNumber !== '09122136866') {
+                showMessage("عملیات نامعتبر یا عدم دسترسی.");
+                return;
+            }
+            setAdminLoading(7, true, 'Base'); 
+            try {
+                const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                await firestoreUpdateDoc(salonDocRef, { isApproved: true });
+                selectedManagedSalon.isApproved = true;
+                const salonInList = managedSalons.find(s => s.id === selectedManagedSalon.id && s.sourceAppId === activeReservationUserAppId);
+                if (salonInList) {
+                    salonInList.isApproved = true;
+                }
+                populateSalonUpdateFormStep7(); 
+                showMessage("سالن با موفقیت تایید شد.");
+            } catch (e) {
+                console.error("Error approving salon:", e);
+                showMessage("خطا در تایید سالن.");
+            } finally {
+                setAdminLoading(7, false, 'Base');
+            }
+        }
+
+        async function handleDeleteSalon() {
+            if (!db || !selectedManagedSalon || !selectedManagedSalon.id || !auth.currentUser || managerMobileNumber !== '09122136866') {
+                showMessage("عملیات نامعتبر یا عدم دسترسی برای حذف.");
+                return;
+            }
+            if (confirm(`آیا از حذف کامل سالن "${selectedManagedSalon.name}" مطمئن هستید؟ این عمل قابل بازگشت نیست.`)) {
+                setAdminLoading(7, true, 'Base');
+                try {
+                    const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                    await deleteDoc(salonDocRef);
+                    showMessage(`سالن "${selectedManagedSalon.name}" با موفقیت حذف شد.`);
+                    managedSalons = managedSalons.filter(s => !(s.id === selectedManagedSalon.id && s.sourceAppId === activeReservationUserAppId));
+                    selectedManagedSalon = null;
+                    if (managedSalons.length > 0) {
+                        populateManagedSalonsList(); 
+                        navigateToAdminStep('step3_salon_list');
+                    } else { 
+                        navigateToAdminStep('step3_start_business'); 
+                    }
+                } catch (e) {
+                    console.error("Error deleting salon:", e);
+                    showMessage("خطا در حذف سالن.");
+                } finally {
+                    setAdminLoading(7, false, 'Base');
+                }
+            }
+        }
+
+
+        function renderCategoriesForManagement() {
+            const container = document.getElementById('categoriesManagementContainer');
+            container.innerHTML = '';
+            if (!selectedManagedSalon || !selectedManagedSalon.id || selectedManagedSalon.isNew) { 
+                 container.innerHTML = '<p class="text-sm text-gray-500">ابتدا اطلاعات پایه سالن را ذخیره کنید.</p>';
+                return;
+            }
+            if (!selectedManagedSalon.categories || selectedManagedSalon.categories.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500">هنوز هیچ دسته‌بندی برای این سالن ثبت نشده است.</p>';
+                return;
+            }
+
+            selectedManagedSalon.categories.forEach((category, catIndex) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'p-3 border rounded-md mb-3 bg-gray-50 category-block-scrollable'; 
+                
+                const categoryHeaderWrapper = document.createElement('div'); 
+                categoryHeaderWrapper.className = 'category-header-container';
+
+                const categoryHeader = document.createElement('div');
+                categoryHeader.className = 'flex justify-between items-center mb-2'; 
+                
+                const categoryTitle = document.createElement('h4');
+                categoryTitle.className = 'text-md font-semibold text-pink-600 mr-2 category-header-title'; 
+                categoryTitle.textContent = category.name; 
+                
+                const categoryButtonsDiv = document.createElement('div');
+                categoryButtonsDiv.className = 'flex-shrink-0'; 
+                categoryButtonsDiv.innerHTML = `
+                    <button class="btn btn-edit btn-small mr-2" data-cat-index="${catIndex}">ویرایش نام دسته</button>
+                    <button class="btn btn-danger btn-small" data-cat-index="${catIndex}">حذف دسته</button>
+                `;
+                
+                categoryHeader.appendChild(categoryTitle);
+                categoryHeader.appendChild(categoryButtonsDiv);
+                categoryHeaderWrapper.appendChild(categoryHeader);
+                categoryDiv.appendChild(categoryHeaderWrapper);
+
+
+                const servicesListDiv = document.createElement('div');
+                servicesListDiv.className = 'ml-4 space-y-1'; 
+                if (category.services && category.services.length > 0) {
+                    category.services.forEach((service, serviceIndex) => {
+                        const serviceDiv = document.createElement('div');
+                        serviceDiv.className = 'flex justify-between items-center text-sm p-2 border-b service-item-row'; 
+                        serviceDiv.innerHTML = `
+                            <span style="white-space: nowrap;">${service.name} (قیمت: ${toPersianNum(service.price)}, مدت: ${toPersianNum(service.durationHours)} ساعت)</span>
+                            <div class="flex-shrink-0">
+                                <button class="btn btn-edit btn-small mr-1" data-cat-index="${catIndex}" data-service-index="${serviceIndex}">ویرایش</button>
+                                <button class="btn btn-danger btn-small" data-cat-index="${catIndex}" data-service-index="${serviceIndex}">حذف</button>
+                            </div>
+                        `;
+                        serviceDiv.querySelector('button.btn-edit').onclick = () => handleEditService(catIndex, serviceIndex);
+                        serviceDiv.querySelector('button.btn-danger').onclick = () => handleDeleteService(catIndex, serviceIndex);
+                        servicesListDiv.appendChild(serviceDiv);
+                    });
+                } else {
+                    servicesListDiv.innerHTML = '<p class="text-xs text-gray-500">هیچ خدمتی در این دسته‌بندی موجود نیست.</p>';
+                }
+                categoryDiv.appendChild(servicesListDiv);
+
+                const btnAddServiceToCategory = document.createElement('button');
+                btnAddServiceToCategory.className = 'btn btn-primary btn-small mt-2';
+                btnAddServiceToCategory.textContent = 'افزودن خدمت به این دسته';
+                btnAddServiceToCategory.onclick = () => handleAddService(catIndex);
+                categoryDiv.appendChild(btnAddServiceToCategory);
+                
+                container.appendChild(categoryDiv);
+
+                categoryHeader.querySelector('button.btn-edit').onclick = () => handleEditCategoryName(catIndex);
+                categoryHeader.querySelector('button.btn-danger').onclick = () => handleDeleteCategory(catIndex);
+            });
+        }
+
+        async function handleEditCategoryName(catIndex) {
+            const category = selectedManagedSalon.categories[catIndex];
+            const newName = prompt(`نام جدید برای دسته‌بندی "${category.name}" را وارد کنید:`, category.name);
+            if (newName && newName.trim() !== "") {
+                setAdminLoading(7, true, 'Categories');
+                const updatedCategories = JSON.parse(JSON.stringify(selectedManagedSalon.categories)); 
+                updatedCategories[catIndex].name = newName.trim();
+                try {
+                    const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                    await firestoreUpdateDoc(salonDocRef, { categories: updatedCategories });
+                    selectedManagedSalon.categories = updatedCategories; 
+                    renderCategoriesForManagement();
+                    showMessage("نام دسته‌بندی با موفقیت بروزرسانی شد.");
+                } catch (e) {
+                    console.error("Error updating category name:", e);
+                    showMessage("خطا در بروزرسانی نام دسته‌بندی.");
+                } finally {
+                    setAdminLoading(7, false, 'Categories');
+                }
+            }
+        }
+
+        async function handleDeleteCategory(catIndex) {
+            const category = selectedManagedSalon.categories[catIndex];
+            if (confirm(`آیا از حذف دسته‌بندی "${category.name}" و تمام خدمات آن مطمئن هستید؟`)) {
+                setAdminLoading(7, true, 'Categories');
+                const updatedCategories = selectedManagedSalon.categories.filter((_, index) => index !== catIndex);
+                try {
+                    const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                    await firestoreUpdateDoc(salonDocRef, { categories: updatedCategories });
+                    selectedManagedSalon.categories = updatedCategories; 
+                    renderCategoriesForManagement();
+                    showMessage("دسته‌بندی با موفقیت حذف شد.");
+                } catch (e) {
+                    console.error("Error deleting category:", e);
+                    showMessage("خطا در حذف دسته‌بندی.");
+                } finally {
+                    setAdminLoading(7, false, 'Categories');
+                }
+            }
+        }
+        
+        async function handleAddSalonCategory() {
+             if (!selectedManagedSalon || !selectedManagedSalon.id) {
+                showMessage("لطفا ابتدا اطلاعات پایه سالن را ذخیره کنید.");
+                return;
+            }
+            const categoryName = prompt("نام دسته‌بندی جدید را وارد کنید:");
+            if (categoryName && categoryName.trim() !== "") {
+                const newCategoryId = `cat_${Date.now()}`; 
+                const newCategory = { id: newCategoryId, name: categoryName.trim(), services: [] };
+                setAdminLoading(7, true, 'Categories');
+                const updatedCategories = [...(selectedManagedSalon.categories || []), newCategory];
+                try {
+                    const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                    await firestoreUpdateDoc(salonDocRef, { categories: updatedCategories });
+                    selectedManagedSalon.categories = updatedCategories; 
+                    renderCategoriesForManagement();
+                    showMessage("دسته‌بندی جدید با موفقیت اضافه شد.");
+                } catch (e) {
+                    console.error("Error adding new category:", e);
+                    showMessage("خطا در افزودن دسته‌بندی جدید.");
+                } finally {
+                    setAdminLoading(7, false, 'Categories');
+                }
+            }
+        }
+
+        async function handleAddService(catIndex) {
+            if (!selectedManagedSalon || !selectedManagedSalon.id) {
+                showMessage("لطفا ابتدا اطلاعات پایه سالن را ذخیره کنید.");
+                return;
+            }
+            const serviceName = prompt("نام خدمت جدید را وارد کنید:");
+            if (!serviceName || serviceName.trim() === "") return;
+            const priceStr = prompt("قیمت خدمت را وارد کنید (عدد):");
+            const price = parseInt(toEnglishNum(priceStr), 10);
+            if (isNaN(price) || price <= 0) {
+                showMessage("قیمت نامعتبر است."); return;
+            }
+            const durationStr = prompt("مدت زمان خدمت به ساعت را وارد کنید (مثلاً 1 یا 0.5 یا 1.5):");
+            const durationHours = parseFloat(toEnglishNum(durationStr));
+             if (isNaN(durationHours) || durationHours <= 0) {
+                showMessage("مدت زمان نامعتبر است."); return;
+            }
+
+            const newServiceId = `srv_${Date.now()}`;
+            const newService = { id: newServiceId, name: serviceName.trim(), price, durationHours };
+            
+            setAdminLoading(7, true, 'Categories');
+            const updatedCategories = JSON.parse(JSON.stringify(selectedManagedSalon.categories)); 
+            if (!updatedCategories[catIndex].services) {
+                updatedCategories[catIndex].services = [];
+            }
+            updatedCategories[catIndex].services.push(newService);
+
+            try {
+                const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                await firestoreUpdateDoc(salonDocRef, { categories: updatedCategories });
+                selectedManagedSalon.categories = updatedCategories;
+                renderCategoriesForManagement();
+                showMessage("خدمت جدید با موفقیت اضافه شد.");
+            } catch (e) {
+                console.error("Error adding new service:", e);
+                showMessage("خطا در افزودن خدمت جدید.");
+            } finally {
+                setAdminLoading(7, false, 'Categories');
+            }
+        }
+
+        async function handleEditService(catIndex, serviceIndex) {
+            const service = selectedManagedSalon.categories[catIndex].services[serviceIndex];
+            const newName = prompt("نام جدید خدمت:", service.name);
+            if (newName === null) return; 
+            const newPriceStr = prompt("قیمت جدید خدمت:", service.price);
+            if (newPriceStr === null) return;
+            const newPrice = parseInt(toEnglishNum(newPriceStr), 10);
+            if (isNaN(newPrice) || newPrice <= 0) { showMessage("قیمت نامعتبر."); return; }
+            const newDurationStr = prompt("مدت زمان جدید (ساعت):", service.durationHours);
+            if (newDurationStr === null) return;
+            const newDuration = parseFloat(toEnglishNum(newDurationStr));
+            if (isNaN(newDuration) || newDuration <= 0) { showMessage("مدت زمان نامعتبر."); return; }
+
+            setAdminLoading(7, true, 'Categories');
+            const updatedCategories = JSON.parse(JSON.stringify(selectedManagedSalon.categories)); 
+            updatedCategories[catIndex].services[serviceIndex] = { 
+                ...service, 
+                name: newName.trim(), 
+                price: newPrice, 
+                durationHours: newDuration 
+            };
+            try {
+                const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                await firestoreUpdateDoc(salonDocRef, { categories: updatedCategories });
+                selectedManagedSalon.categories = updatedCategories;
+                renderCategoriesForManagement();
+                showMessage("خدمت با موفقیت بروزرسانی شد.");
+            } catch (e) {
+                console.error("Error updating service:", e);
+                showMessage("خطا در بروزرسانی خدمت.");
+            } finally {
+                setAdminLoading(7, false, 'Categories');
+            }
+        }
+        
+        async function handleDeleteService(catIndex, serviceIndex) {
+            const service = selectedManagedSalon.categories[catIndex].services[serviceIndex];
+            if (confirm(`آیا از حذف خدمت "${service.name}" مطمئن هستید؟`)) {
+                setAdminLoading(7, true, 'Categories');
+                const updatedCategories = JSON.parse(JSON.stringify(selectedManagedSalon.categories)); 
+                updatedCategories[catIndex].services.splice(serviceIndex, 1);
+                try {
+                    const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                    await firestoreUpdateDoc(salonDocRef, { categories: updatedCategories });
+                    selectedManagedSalon.categories = updatedCategories;
+                    renderCategoriesForManagement();
+                    showMessage("خدمت با موفقیت حذف شد.");
+                } catch (e) {
+                    console.error("Error deleting service:", e);
+                    showMessage("خطا در حذف خدمت.");
+                } finally {
+                    setAdminLoading(7, false, 'Categories');
+                }
+            }
+        }
+
+
+        function setupStep7() {
+            const backButton = document.getElementById('btnBackToManagementOptionsFromUpdate');
+            if (backButton) {
+                 // This is now set dynamically in populateSalonUpdateFormStep7
+            } else {
+                console.error("Button 'btnBackToManagementOptionsFromUpdate' not found in setupStep7");
+            }
+
+            const saveBaseInfoButton = document.getElementById('btnSaveSalonBaseInfo');
+            if (saveBaseInfoButton) {
+                saveBaseInfoButton.onclick = handleSaveSalonBaseInfo;
+            } else {
+                 console.error("Button 'btnSaveSalonBaseInfo' not found in setupStep7");
+            }
+
+            const addCategoryButton = document.getElementById('btnAddSalonCategory');
+            if (addCategoryButton) {
+                addCategoryButton.onclick = handleAddSalonCategory;
+            } else {
+                console.error("Button 'btnAddSalonCategory' not found in setupStep7");
+            }
+            const approveSalonButton = document.getElementById('btnApproveSalon');
+            if (approveSalonButton) {
+                approveSalonButton.onclick = handleApproveSalon;
+            }
+            const deleteSalonButton = document.getElementById('btnDeleteSalon');
+            if(deleteSalonButton) {
+                deleteSalonButton.onclick = handleDeleteSalon;
+            }
+        }
+        
+        // --- Step 8 & 9 (Calendar & Club) ---
+        function populateCalendarSettings() {
+            const form = document.getElementById('workHoursForm');
+            form.innerHTML = ''; // Clear previous
+            const daysOfWeek = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"];
+            const workHours = selectedManagedSalon.workHours || {};
+
+            daysOfWeek.forEach(day => {
+                const daySettings = workHours[day] || { active: true, start: '09:00', end: '19:00' };
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'grid grid-cols-1 md:grid-cols-3 gap-4 items-center p-2 border rounded';
+                dayDiv.innerHTML = `
+                    <label class="font-semibold">${day}</label>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="check_${day}" ${daySettings.active ? 'checked' : ''} class="h-5 w-5 rounded text-indigo-600 focus:ring-indigo-500">
+                        <label for="check_${day}">فعال</label>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="start_${day}" class="text-xs">از:</label>
+                        <input type="time" id="start_${day}" value="${daySettings.start || '09:00'}" class="input-field !mb-0" ${!daySettings.active ? 'disabled' : ''}>
+                        <label for="end_${day}" class="text-xs">تا:</label>
+                        <input type="time" id="end_${day}" value="${daySettings.end || '19:00'}" class="input-field !mb-0" ${!daySettings.active ? 'disabled' : ''}>
+                    </div>
+                `;
+                form.appendChild(dayDiv);
+
+                dayDiv.querySelector(`#check_${day}`).addEventListener('change', (e) => {
+                    const isChecked = e.target.checked;
+                    dayDiv.querySelector(`#start_${day}`).disabled = !isChecked;
+                    dayDiv.querySelector(`#end_${day}`).disabled = !isChecked;
+                });
+            });
+        }
+        
+        async function handleSaveCalendarSettings() {
+            if (!selectedManagedSalon || !db) return;
+            setAdminLoading(8, true);
+            clearAdminError(8);
+
+            const daysOfWeek = ["شنبه", "یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه"];
+            const newWorkHours = {};
+
+            daysOfWeek.forEach(day => {
+                const isActive = document.getElementById(`check_${day}`).checked;
+                const startTime = document.getElementById(`start_${day}`).value;
+                const endTime = document.getElementById(`end_${day}`).value;
+                newWorkHours[day] = { active: isActive, start: startTime, end: endTime };
+            });
+
+            try {
+                const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                await firestoreUpdateDoc(salonDocRef, { workHours: newWorkHours });
+                selectedManagedSalon.workHours = newWorkHours; // Update local state
+                showMessage("تقویم کاری با موفقیت ذخیره شد.");
+            } catch(e) {
+                console.error("Error saving work hours: ", e);
+                displayAdminError(8, "خطا در ذخیره تقویم کاری.");
+            } finally {
+                setAdminLoading(8, false);
+            }
+        }
+        
+        function populateCustomerClubSettings(){
+             const rules = selectedManagedSalon.discountRules || {};
+             document.getElementById('minVisitsForDiscount').value = rules.minVisits || '';
+             document.getElementById('minReferralsForDiscount').value = rules.minReferrals || '';
+             document.getElementById('maxDiscountPercentage').value = rules.maxDiscount || '';
+        }
+
+        async function handleSaveCustomerClubSettings(){
+             if (!selectedManagedSalon || !db) return;
+            setAdminLoading(9, true);
+            clearAdminError(9);
+
+            const newRules = {
+                minVisits: parseInt(document.getElementById('minVisitsForDiscount').value, 10) || 0,
+                minReferrals: parseInt(document.getElementById('minReferralsForDiscount').value, 10) || 0,
+                maxDiscount: parseInt(document.getElementById('maxDiscountPercentage').value, 10) || 0,
+            };
+
+            try {
+                const salonDocRef = doc(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'salons', selectedManagedSalon.id);
+                await firestoreUpdateDoc(salonDocRef, { discountRules: newRules });
+                selectedManagedSalon.discountRules = newRules;
+                showMessage("قوانین باشگاه مشتریان ذخیره شد.");
+            } catch(e) {
+                console.error("Error saving club rules: ", e);
+                displayAdminError(9, "خطا در ذخیره قوانین.");
+            } finally {
+                setAdminLoading(9, false);
+            }
+        }
+
+        function setupStep8(){
+            document.getElementById('btnBackToManagementOptionsFromCalendar').onclick = () => navigateToAdminStep(4);
+            document.getElementById('btnSaveWorkHours').onclick = handleSaveCalendarSettings;
+        }
+
+        function setupStep9(){
+             document.getElementById('btnBackToManagementOptionsFromClub').onclick = () => navigateToAdminStep(4);
+             document.getElementById('btnSaveClubRules').onclick = handleSaveCustomerClubSettings;
+        }
+
+        // --- Step 10: Reviews ---
+        function generateStars(rating) {
+            let starsHtml = '';
+            const fullStars = Math.floor(rating);
+            const halfStar = rating % 1 >= 0.5 ? 1 : 0;
+            const emptyStars = 5 - fullStars - halfStar;
+
+            for (let i = 0; i < fullStars; i++) {
+                starsHtml += `<span class="star selected">★</span>`;
+            }
+            if (halfStar) { // Basic half-star representation
+                 starsHtml += `<span class="star selected">★</span>`; 
+            }
+            for (let i = 0; i < emptyStars; i++) {
+                 starsHtml += `<span class="star">☆</span>`;
+            }
+            return starsHtml;
+        }
+
+        async function fetchAndDisplayReviews() {
+            if (!db || !selectedManagedSalon) {
+                displayAdminError(10, "سالن انتخاب نشده است.");
+                return;
+            }
+            setAdminLoading(10, true);
+            clearAdminError(10);
+            
+            const reviewsContainer = document.getElementById('reviewsContainer');
+            const noReviewsMessage = document.getElementById('noReviewsMessage');
+            reviewsContainer.innerHTML = '';
+            noReviewsMessage.style.display = 'none';
+
+            const salonId = selectedManagedSalon.id;
+            const userAggregatedData = {};
+
+            try {
+                // 1. Fetch ratings from bookings
+                const bookingsColRef = collection(db, 'artifacts', activeReservationUserAppId, 'public', 'data', 'bookings');
+                // FIX: Query only by salonId to avoid composite index. Filter for userRating on client side.
+                const bookingsQuery = query(bookingsColRef, where("salonId", "==", salonId));
+                const bookingsSnapshot = await getDocs(bookingsQuery);
+                
+                bookingsSnapshot.forEach(doc => {
+                    const booking = doc.data();
+                    if(booking.userRating && booking.userRating > 0) {
+                        const userId = booking.customerPhoneNumber;
+                        if (!userAggregatedData[userId]) {
+                            userAggregatedData[userId] = { ratings: [], userName: booking.customerName };
+                        }
+                        userAggregatedData[userId].ratings.push(booking.userRating);
+                    }
+                });
+
+                // 2. Fetch ratings and comments from salonReviews
+                const reviewsColRef = collection(db, 'artifacts', userAdminAppId, 'public', 'data', 'salonReviews');
+                const reviewsQuery = query(reviewsColRef, where("salonId", "==", salonId));
+                const reviewsSnapshot = await getDocs(reviewsQuery);
+
+                reviewsSnapshot.forEach(doc => {
+                    const review = doc.data();
+                    const userId = review.userId;
+                     if (!userAggregatedData[userId]) {
+                        userAggregatedData[userId] = { ratings: [], userName: review.userName };
+                    }
+                    if (review.rating && review.rating > 0) {
+                        userAggregatedData[userId].ratings.push(review.rating);
+                    }
+                    // Use the latest available name
+                    userAggregatedData[userId].userName = review.userName || userAggregatedData[userId].userName;
+                    userAggregatedData[userId].comment = review.reviewText;
+                });
+                
+                if (Object.keys(userAggregatedData).length === 0) {
+                    noReviewsMessage.style.display = 'block';
+                    return;
+                }
+
+                // 3. Calculate average and populate
+                for (const userId in userAggregatedData) {
+                    const data = userAggregatedData[userId];
+                    const totalRating = data.ratings.reduce((sum, current) => sum + current, 0);
+                    const averageRating = data.ratings.length > 0 ? (totalRating / data.ratings.length) : 0;
+
+                    const card = document.createElement('div');
+                    card.className = 'review-card';
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-semibold text-lg">${data.userName || 'کاربر ناشناس'}</h4>
+                            <div class="star-rating" title="میانگین امتیاز: ${averageRating.toFixed(1)}">
+                                ${generateStars(averageRating)}
+                            </div>
+                        </div>
+                        <p class="text-gray-600">${data.comment || '<i>بدون نظر متنی</i>'}</p>
+                    `;
+                    reviewsContainer.appendChild(card);
+                }
+
+            } catch (e) {
+                console.error("Error fetching reviews:", e);
+                displayAdminError(10, "خطا در بارگذاری نظرات: " + e.message);
+            } finally {
+                setAdminLoading(10, false);
+            }
+        }
+        
+        function setupStep10(){
+            document.getElementById('btnBackToManagementOptionsFromReviews').onclick = () => navigateToAdminStep(4);
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAdminFirebase(); 
+            populateCityDropdown();
+            setupStep1(); 
+            setupStep2(); 
+            setupStep3(); 
+            setupStep4(); 
+            setupStep5(); 
+            setupStep6(); 
+            setupStep7(); 
+            setupStep8();
+            setupStep9();
+            setupStep10();
+        });
+
+    </script>
+</body>
+</html>

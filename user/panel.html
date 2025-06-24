@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حساب کاربری و رزروهای من</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Vazirmatn', sans-serif; 
+            background-color: #f1f5f9; /* slate-100 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+            color: #1e293b; /* slate-800 */
+        }
+        .app-container {
+            background-color: white;
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); /* shadow-lg */
+            width: 100%;
+            max-width: 42rem; /* max-w-2xl */
+        }
+        .step { display: none; }
+        .step.active { display: block; }
+        .btn {
+            padding: 0.625rem 1rem; /* py-2.5 px-4 */
+            border-radius: 0.375rem; /* rounded-md */
+            font-weight: 600; /* font-semibold */
+            transition: background-color 0.15s ease-in-out;
+            cursor: pointer;
+            text-align: center;
+        }
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem; /* text-xs */
+        }
+        .btn-primary { background-color: #3b82f6; color: white; } /* blue-500 */
+        .btn-primary:hover { background-color: #2563eb; } /* blue-600 */
+        .btn-secondary { background-color: #d1d5db; color: #1f2937; } /* gray-300, gray-800 */
+        .btn-secondary:hover { background-color: #9ca3af; } /* gray-400 */
+        .btn-danger { background-color: #ef4444; color: white; } /* red-500 */
+        .btn-danger:hover { background-color: #dc2626; } /* red-600 */
+        .btn-success { background-color: #22c55e; color: white; } /* green-500 */
+        .btn-success:hover { background-color: #16a34a; } /* green-600 */
+         .btn-info { background-color: #0ea5e9; color: white; } /* sky-500 */
+        .btn-info:hover { background-color: #0284c7; } /* sky-600 */
+        .btn-icon {
+            padding: 0.5rem;
+            border-radius: 9999px;
+        }
+        
+        .input-field, .textarea-field {
+            width: 100%;
+            padding: 0.625rem; /* p-2.5 */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+        .textarea-field {
+            min-height: 80px;
+        }
+        .error-message { color: #ef4444; /* red-500 */ margin-top: 0.5rem; font-size: 0.875rem; /* text-sm */ }
+        .loading-message { text-align: center; margin-y: 1rem; color: #6b7280; } /* zinc-500 */
+        
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem 0.375rem 0 0; /* rounded-t-md */
+            font-weight: 500; /* font-medium */
+            cursor: pointer;
+            background-color: #e5e7eb; /* gray-200 */
+            color: #4b5563; /* gray-600 */
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-bottom: none;
+        }
+        .tab-btn.active {
+            background-color: white;
+            color: #3b82f6; /* blue-600 */
+            border-color: #d1d5db; /* gray-300 */
+            border-bottom: 1px solid white; /* To make it look connected to content below */
+            font-weight: 600;
+        }
+        .booking-card, .visited-salon-card {
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1rem; /* p-4 */
+            margin-bottom: 1rem; /* mb-4 */
+            background-color: #f9fafb; /* gray-50 */
+            position: relative;
+        }
+        .booking-card h3, .visited-salon-card h3 {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600;
+            color: #1d4ed8; /* blue-700 */
+            margin-bottom: 0.5rem;
+        }
+         .booking-card p, .visited-salon-card p {
+            font-size: 0.875rem; /* text-sm */
+            color: #4b5563; /* gray-600 */
+            margin-bottom: 0.25rem;
+        }
+        .booking-card .services-list {
+            list-style-type: disc;
+            margin-right: 1.5rem; /* mr-6 for RTL */
+            padding-right: 0.5rem; /* pr-2 for RTL */
+            font-size: 0.875rem;
+            color: #4b5563;
+        }
+         #initialAppLoading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.125rem; /* text-lg */
+            color: #be185d; /* pink-700 */
+        }
+        .option-button {
+            display: block;
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            border-radius: 0.5rem;
+            text-align: right;
+            background-color: #e0e7ff; /* indigo-100 */
+            color: #3730a3; /* indigo-800 */
+            font-weight: 500;
+        }
+        .option-button:hover {
+            background-color: #c7d2fe; /* indigo-200 */
+        }
+         /* Custom Modals */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .modal-box {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            width: 90%;
+            max-width: 25rem;
+        }
+        /* Star Rating */
+        .star-rating .star {
+            cursor: pointer;
+            color: #d1d5db; /* gray-300 */
+            font-size: 1.75rem; /* text-2xl */
+            transition: color 0.2s;
+        }
+        .star-rating .star:hover,
+        .star-rating .star.selected {
+            color: #f59e0b; /* amber-500 */
+        }
+    </style>
+</head>
+<body>
+    <div id="initialAppLoading" class="loading-message" style="display:block;">در حال بارگذاری برنامه...</div>
+
+    <div class="app-container" id="mainAppContainer" style="display:none;">
+        <div id="step1" class="step">
+            <h2 class="text-xl font-semibold mb-6 text-center text-blue-700">ورود کاربر</h2>
+            <div class="mb-4">
+                <label for="userMobileInput" class="block text-sm font-medium text-gray-700 mb-1">شماره موبایل:</label>
+                <input type="tel" id="userMobileInput" class="input-field text-left dir-ltr" placeholder="مثال: 09123456789" maxlength="11">
+            </div>
+            <button id="btnGetUserOtp" class="btn btn-primary w-full">دریافت کد تایید</button>
+            <p id="errorStep1" class="error-message"></p>
+            <p id="loadingStep1" class="loading-message" style="display: none;">در حال ارسال کد...</p>
+        </div>
+
+        <div id="step2" class="step">
+            <h2 class="text-xl font-semibold mb-4 text-center text-blue-700">تایید کد</h2>
+            <p id="userOtpSentTo" class="mb-3 text-center text-sm text-gray-600"></p>
+            <p id="userGeneratedOtpDisplay" class="mb-3 text-center text-sm text-indigo-600 font-semibold"></p> 
+            <input type="number" id="userOtpInput" placeholder="کد ۴ رقمی" class="input-field text-center dir-ltr" maxlength="4">
+            <div class="flex gap-2">
+                <button id="btnBackToUserMobileInput" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnVerifyUserOtp" class="btn btn-primary flex-1">تایید</button> 
+            </div>
+            <p id="errorStep2" class="error-message"></p>
+            <p id="loadingStep2" class="loading-message" style="display: none;">در حال تایید کد...</p>
+        </div>
+
+        <div id="step3" class="step"> <!-- User Options Menu -->
+            <div class="flex justify-between items-center mb-6">
+                 <h2 class="text-xl font-semibold text-blue-700">گزینه‌های کاربری</h2>
+                 <button id="btnLogoutFromOptions" class="btn btn-danger btn-small">خروج</button>
+            </div>
+            <button id="btnGoToUpdateProfile" class="option-button">بروزرسانی اطلاعات کاربری</button>
+            <button id="btnGoToManageBookings" class="option-button">مدیریت رزروها</button>
+            <button id="btnGoToVisitedSalons" class="option-button">سالن های انجام خدمات</button>
+            <button id="btnContactSiteAdmin" class="option-button">تماس با مدیر سایت</button>
+            <p id="errorStep3" class="error-message"></p>
+        </div>
+        
+        <div id="step4" class="step"> <!-- Visited Salons List (New Step 4) -->
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-blue-700">سالن‌های خدمات‌دهنده به شما</h2>
+                <button id="btnBackToOptionsFromVisitedSalons" class="btn btn-secondary btn-small">بازگشت به گزینه‌ها</button>
+            </div>
+            <p id="loadingStep4VisitedSalons" class="loading-message" style="display: none;">در حال بارگذاری سالن‌ها...</p>
+            <p id="errorStep4" class="error-message"></p> 
+            <div id="visitedSalonsListContainer" class="max-h-[70vh] overflow-y-auto">
+                </div>
+            <p id="noVisitedSalonsMessage" class="text-center text-gray-500 mt-4" style="display:none;">شما هنوز در هیچ سالنی رزرو نداشته‌اید.</p>
+        </div>
+
+        <div id="step5" class="step"> <!-- Update User Info Step -->
+            <h2 class="text-xl font-semibold mb-6 text-center text-blue-700">بروزرسانی اطلاعات کاربری</h2>
+            <div class="mb-4">
+                <label for="editUserNameInput" class="block text-sm font-medium text-gray-700 mb-1">نام:</label>
+                <input type="text" id="editUserNameInput" class="input-field">
+            </div>
+            <div class="mb-4">
+                <label for="editUserMobileDisplay" class="block text-sm font-medium text-gray-700 mb-1">شماره موبایل (فقط نمایش):</label>
+                <input type="tel" id="editUserMobileDisplay" class="input-field text-left dir-ltr" readonly>
+            </div>
+            <div class="flex gap-2 mt-6">
+                <button id="btnBackToOptionsFromProfile" class="btn btn-secondary flex-1">بازگشت به گزینه‌ها</button>
+                <button id="btnSaveUserProfile" class="btn btn-success flex-1">ذخیره تغییرات</button>
+            </div>
+            <p id="errorStep5" class="error-message"></p> 
+            <p id="loadingStep5Profile" class="loading-message" style="display: none;">در حال ذخیره...</p>
+        </div>
+
+
+        <div id="step6" class="step"> <!-- Booking List Step -->
+            <div class="flex justify-between items-center mb-4">
+                 <h2 class="text-xl font-semibold text-blue-700">لیست رزروهای شما</h2>
+            </div>
+             <button id="btnBackToOptionsFromBookings" class="btn btn-secondary w-full mb-4">بازگشت به گزینه‌ها</button>
+           
+            <div class="flex border-b border-gray-300 mb-4">
+                <button id="btnFutureBookingsTab" class="tab-btn active">نوبت های جاری</button>
+                <button id="btnCompletedBookingsTab" class="tab-btn">انجام شده</button>
+                <button id="btnCancelledBookingsTab" class="tab-btn">لغو شده</button>
+            </div>
+            <p id="loadingStep6Bookings" class="loading-message" style="display: none;">در حال بارگذاری رزروها...</p> 
+            <p id="errorStep6" class="error-message"></p>  
+            <div id="bookingsDisplayAreaForStep6" class="max-h-[60vh] overflow-y-auto"> 
+                </div>
+            <p id="noBookingsInListMessageForStep6" class="text-center text-gray-500 mt-4" style="display:none;">هیچ رزروی برای نمایش یافت نشد.</p> 
+        </div>
+    </div>
+    
+    <!-- Custom Modal for Confirmation -->
+    <div id="customConfirmModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box">
+            <p id="customConfirmMessage" class="text-lg mb-4"></p>
+            <div class="flex justify-center gap-4">
+                <button id="btnConfirmCancel" class="btn btn-secondary">انصراف</button>
+                <button id="btnConfirmOk" class="btn btn-danger">تایید</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Booking Details Modal -->
+    <div id="bookingDetailsModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box text-right" style="max-width: 32rem;">
+            <h3 id="detailsModalTitle" class="text-xl font-bold text-blue-800 mb-4">جزئیات سفارش</h3>
+            
+            <div id="detailsModalSalonInfo" class="mb-4">
+                <p><strong>تلفن:</strong> <span id="detailsSalonPhone"></span></p>
+                <p><strong>آدرس:</strong> <span id="detailsSalonAddress"></span></p>
+            </div>
+            
+            <hr class="my-3"/>
+            
+            <div id="detailsModalBookingInfo" class="mb-4">
+                <p><strong>تاریخ و ساعت:</strong> <span id="detailsBookingDateTime"></span></p>
+                <p><strong>خدمات انتخاب شده:</strong></p>
+                <ul id="detailsServicesList" class="list-disc list-inside pr-4 my-2 bg-slate-50 p-2 rounded"></ul>
+            </div>
+            
+             <hr class="my-3"/>
+
+            <div id="detailsModalPaymentInfo" class="mb-6 text-sm">
+                 <p><strong>مبلغ کل:</strong> <span id="detailsTotal"></span> تومان</p>
+                 <p><strong>بیعانه پرداخت شده:</strong> <span id="detailsDeposit"></span> تومان</p>
+                 <p><strong>مانده:</strong> <span id="detailsRemaining"></span> تومان</p>
+                 <p id="detailsFinalPaymentRow" style="display:none;"><strong>پرداخت حضوری:</strong> <span id="detailsFinalPayment"></span> تومان</p>
+            </div>
+
+            <div class="flex justify-between items-center gap-4">
+                <a href="#" id="detailsNewBookingBtn" target="_blank" class="btn btn-success flex-1">رزرو جدید در این سالن</a>
+                <button id="detailsCloseBtn" class="btn btn-secondary flex-1">بستن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Salon Review Modal -->
+     <div id="salonReviewModal" class="modal-overlay" style="display: none;">
+        <div class="modal-box text-right" style="max-width: 32rem;">
+            <h3 id="reviewModalTitle" class="text-xl font-bold text-blue-800 mb-4">ثبت نظر برای سالن</h3>
+            <form id="salonReviewForm">
+                 <input type="hidden" id="reviewSalonId">
+                 <div class="form-group text-center mb-4">
+                    <label class="block mb-2">امتیاز شما:</label>
+                    <div id="reviewStarRating" class="star-rating inline-flex flex-row-reverse">
+                        <span class="star" data-value="5">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="1">★</span>
+                    </div>
+                     <input type="hidden" id="reviewRatingValue" value="0">
+                 </div>
+                 <div class="form-group">
+                    <label for="reviewTextArea">نظر شما:</label>
+                    <textarea id="reviewTextArea" class="textarea-field" placeholder="نظر خود را اینجا بنویسید..."></textarea>
+                 </div>
+                 <div class="flex justify-between items-center gap-4 mt-6">
+                    <button type="submit" class="btn btn-success flex-1">ثبت نظر</button>
+                    <button type="button" id="reviewCloseBtn" class="btn btn-secondary flex-1">انصراف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <footer class="mt-8 text-center text-xs text-gray-500">
+        <p>Vahid Ostadhashemi</p>
+        <p class="mt-1">09122136866</p>
+    </footer>
+
+    <div id="customMessageBox" class="message-box"></div>
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, Timestamp, setLogLevel, doc, getDoc, setDoc, deleteDoc, serverTimestamp, updateDoc as firestoreUpdateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; 
+
+        // --- Global State and Constants ---
+        let currentListStep = 1;
+        let userPhoneNumber = '';
+        let allUserBookings = []; 
+        let salonDetailsCache = {}; // Cache for salon names
+        const OTP_EXPIRATION_MINUTES_USER = 5;
+        let activeBookingsListTab = 'future'; // Can be 'future', 'completed', or 'cancelled'
+        let currentCustomerProfileData = null; 
+
+        let db, auth, currentAppUser, isUserAuthReady = false;
+        
+        const reservationUserAppId = 'salon-booking-html-dev'; 
+        const thisAppId = typeof __app_id !== 'undefined' ? __app_id : 'reservationlist-v1'; 
+
+        const userFirebaseConfig = { 
+            apiKey: "AIzaSyAh45LFZ9wIo17SJFcYU0pMc7u4OoKCQzw",
+            authDomain: "beyaneh-6248e.firebaseapp.com",
+            projectId: "beyaneh-6248e",
+            storageBucket: "beyaneh-6248e.firebasestorage.app",
+            messagingSenderId: "677613588556",
+            appId: "1:677613588556:web:732954add66e552618e4e9"
+        };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userFirebaseConfig;
+        
+        
+        const stepsDOM = document.querySelectorAll('.step');
+        const customMessageBoxDOM = document.getElementById('customMessageBox');
+        const initialAppLoadingDOM = document.getElementById('initialAppLoading');
+        const mainAppContainerDOM = document.getElementById('mainAppContainer');
+        const bookingsDisplayAreaForStep6DOM = document.getElementById('bookingsDisplayAreaForStep6'); 
+        const noBookingsInListMessageForStep6DOM = document.getElementById('noBookingsInListMessageForStep6');
+        const visitedSalonsListContainerDOM = document.getElementById('visitedSalonsListContainer'); 
+        const customConfirmModal = document.getElementById('customConfirmModal');
+        const bookingDetailsModal = document.getElementById('bookingDetailsModal');
+        const salonReviewModal = document.getElementById('salonReviewModal');
+        let confirmCallback = null;
+
+
+        const toPersianNum = (n) => {
+            if (n === null || n === undefined) return '';
+            const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+            return String(n).replace(/\d/g, d => persianDigits[d]);
+        };
+         const toEnglishNum = (s) => { 
+            if (s === null || s === undefined) return '';
+            const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+            return String(s).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
+        };
+
+
+        function showMessage(message, duration = 3000) {
+            customMessageBoxDOM.textContent = message;
+            customMessageBoxDOM.style.display = 'block';
+            setTimeout(() => {
+                customMessageBoxDOM.style.display = 'none';
+            }, duration);
+        }
+        
+        function showConfirmDialog(message, onConfirm) {
+            document.getElementById('customConfirmMessage').textContent = message;
+            customConfirmModal.style.display = 'flex';
+            confirmCallback = onConfirm;
+        }
+
+        function closeConfirmDialog() {
+            customConfirmModal.style.display = 'none';
+            confirmCallback = null;
+        }
+
+        function navigateToListStep(stepNumberOrId) { 
+            stepsDOM.forEach(step => step.classList.remove('active'));
+            const targetStep = document.getElementById(String(stepNumberOrId).startsWith('step') ? stepNumberOrId : `step${stepNumberOrId}`); 
+            
+            if (targetStep) {
+                targetStep.classList.add('active');
+                const id = targetStep.id; 
+                const match = id.match(/^step(\d+)/); 
+                if (match && match[1]) {
+                    currentListStep = parseInt(match[1], 10);
+                } else if (typeof stepNumberOrId === 'number') {
+                    currentListStep = stepNumberOrId;
+                } else {
+                     console.warn("Could not determine numeric step for:", stepNumberOrId, " - currentListStep might be incorrect.");
+                }
+            } else {
+                console.error(`Step with ID ${stepNumberOrId} not found during navigation.`);
+            }
+            if(mainAppContainerDOM) { 
+                 mainAppContainerDOM.scrollTop = 0;
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function displayListError(stepId, message) { // stepId is now expected to be the numeric part or specific string
+            const errorEl = document.getElementById(`errorStep${stepId}`);
+            if (errorEl) errorEl.textContent = message;
+            else console.warn(`Error element for step ${stepId} not found.`);
+        }
+        function clearListError(stepId) {
+            const errorEl = document.getElementById(`errorStep${stepId}`);
+            if (errorEl) errorEl.textContent = '';
+        }
+        function setListLoading(stepIdentifier, isLoading, specificLoadingIdSuffix = '') {
+            let loadingElementId;
+            if (specificLoadingIdSuffix) {
+                loadingElementId = `loadingStep${stepIdentifier}${specificLoadingIdSuffix}`;
+            } else {
+                let stepNumStr = String(stepIdentifier).replace('step', '').split('_')[0];
+                loadingElementId = `loadingStep${stepNumStr}`;
+            }
+            const loadingEl = document.getElementById(loadingElementId);
+            if (loadingEl) {
+                loadingEl.style.display = isLoading ? 'block' : 'none';
+            } else {
+                console.warn(`Loading element with ID ${loadingElementId} not found.`);
+            }
+
+            let submitButton;
+            let stepNumPart = String(stepIdentifier).replace('step', '').split('_')[0];
+
+            if (stepNumPart === '1') submitButton = document.getElementById('btnGetUserOtp');
+            else if (stepNumPart === '2') submitButton = document.getElementById('btnVerifyUserOtp');
+            else if (stepNumPart === '5' && specificLoadingIdSuffix === 'Profile') submitButton = document.getElementById('btnSaveUserProfile'); 
+            
+            if (submitButton) submitButton.disabled = isLoading;
+        }
+        
+        function getTodayPersianDateString() {
+            const today = new Date();
+            const formatter = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                calendar: 'persian'
+            });
+            const parts = formatter.formatToParts(today);
+            let pYear = '', pMonth = '', pDay = '';
+            parts.forEach(part => {
+                if (part.type === 'year') pYear = part.value;
+                else if (part.type === 'month') pMonth = part.value;
+                else if (part.type === 'day') pDay = part.value;
+            });
+            return `${toPersianNum(pYear)}/${toPersianNum(pMonth.padStart(2, '0'))}/${toPersianNum(pDay.padStart(2, '0'))}`;
+        }
+
+
+        async function initializeUserReservationListFirebase() {
+            try {
+                console.log("Initializing Firebase for User Reservation List with config:", firebaseConfig);
+                const app = initializeApp(firebaseConfig, "reservationListApp"); 
+                db = getFirestore(app);
+                auth = getAuth(app); 
+                setLogLevel('debug'); 
+                console.log("Reservation List App ID (for its own data like OTPs):", thisAppId);
+                console.log("Reservation User App ID (for booking data):", reservationUserAppId);
+
+                if(initialAppLoadingDOM) initialAppLoadingDOM.style.display = 'block';
+                if(mainAppContainerDOM) mainAppContainerDOM.style.display = 'none';
+                stepsDOM.forEach(step => step.classList.remove('active'));
+
+
+                onAuthStateChanged(auth, async (user) => {
+                     setTimeout(async () => { 
+                        if (user) {
+                            currentAppUser = user;
+                            console.log("User Reservation List: User authenticated:", currentAppUser.uid, "isAnonymous:", currentAppUser.isAnonymous);
+                        } else {
+                            console.log("User Reservation List: No user found, attempting to establish session.");
+                            try {
+                                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { 
+                                    await signInWithCustomToken(auth, __initial_auth_token);
+                                 } else {
+                                    await signInAnonymously(auth);
+                                 }
+                            } catch (authError) {
+                                console.error("User Reservation List: Error during sign-in attempt:", authError);
+                                displayListError(1, "خطا در فرآیند احراز هویت.");
+                                if(initialAppLoadingDOM) initialAppLoadingDOM.style.display = 'none';
+                                if(mainAppContainerDOM) mainAppContainerDOM.style.display = 'block';
+                                navigateToListStep(1); 
+                                return; 
+                            }
+                        }
+                        
+                        if (auth.currentUser && !isUserAuthReady) { 
+                            isUserAuthReady = true;
+                            console.log("User Reservation List: Auth is ready.");
+                            
+                            if (userPhoneNumber) { 
+                                navigateToListStep(3); 
+                            } else { 
+                                navigateToListStep(1);
+                            }
+                        } else if (!auth.currentUser && isUserAuthReady) { 
+                            console.log("Auth state changed, user signed out or session expired after auth was ready.");
+                            resetUserSession(); 
+                            displayListError(1, "لطفا برای مشاهده رزروها وارد شوید.");
+                        } else if (!auth.currentUser && !isUserAuthReady){
+                             console.log("Auth not ready OR no initial user and auth just became ready. Defaulting to step 1.");
+                             navigateToListStep(1); 
+                        }
+                        if(initialAppLoadingDOM) initialAppLoadingDOM.style.display = 'none';
+                        if(mainAppContainerDOM) mainAppContainerDOM.style.display = 'block';
+                    }, 0);
+                });
+            } catch (e) {
+                console.error("User Reservation List: Firebase initialization error:", e);
+                displayListError(1, "خطا در راه اندازی اولیه برنامه.");
+                isUserAuthReady = true; 
+                if(initialAppLoadingDOM) initialAppLoadingDOM.style.display = 'none';
+                if(mainAppContainerDOM) mainAppContainerDOM.style.display = 'block';
+                navigateToListStep(1); 
+            }
+        }
+        
+        // --- Step 1: User Mobile Input ---
+        async function handleGetUserOtp() {
+            clearListError(1);
+            userPhoneNumber = toEnglishNum(document.getElementById('userMobileInput').value.trim());
+
+            if (!userPhoneNumber.match(/^09\d{9}$/)) {
+                displayListError(1, "لطفا شماره موبایل معتبر وارد کنید.");
+                return;
+            }
+             if (!db || !isUserAuthReady || !auth.currentUser) {
+                displayListError(1, "سرویس پایگاه داده یا احراز هویت هنوز آماده نیست.");
+                return;
+            }
+            setListLoading(1, true);
+
+            const tempGeneratedOtp = String(Math.floor(1000 + Math.random() * 9000));
+            console.log("Generated OTP for user login:", tempGeneratedOtp);
+            
+            const otpDocRef = doc(db, 'artifacts', thisAppId, 'public', 'data', 'userOtps', userPhoneNumber); 
+            const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MINUTES_USER * 60 * 1000);
+
+            try {
+                await setDoc(otpDocRef, {
+                    otpCode: tempGeneratedOtp,
+                    createdAt: serverTimestamp(),
+                    expiresAt: Timestamp.fromDate(expiresAt)
+                });
+                console.log(`User OTP ${tempGeneratedOtp} saved for ${userPhoneNumber}, expires at ${expiresAt.toISOString()}`);
+                
+                document.getElementById('userOtpSentTo').textContent = `کد تایید به شماره ${toPersianNum(userPhoneNumber)} ارسال شد.`;
+                document.getElementById('userGeneratedOtpDisplay').textContent = `کد تایید شما (برای تست): ${toPersianNum(tempGeneratedOtp)}`;
+                document.getElementById('userOtpInput').value = ''; 
+                
+                try {
+                    const smsApiUrl = 'http://api.payamak-panel.com/post/Send.asmx/SendSimpleSMS';
+                    const smsUsername = '9122136866'; // !!! REPLACE !!!
+                    const smsPassword = '6cgm7'; // !!! REPLACE !!!
+                    const smsSenderNumber = '5000127008044'; // !!! REPLACE !!!
+                    
+                    const smsText = `کد تایید شما برای ورود به لیست رزروها: ${tempGeneratedOtp}`;
+
+                    const smsResponse = await fetch(smsApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            'UserName': smsUsername,
+                            'PassWord': smsPassword,
+                            'From': smsSenderNumber,
+                            'To': userPhoneNumber,
+                            'Text': smsText,
+                            'IsFlash': 'false'
+                        })
+                    });
+
+                    const smsResponseText = await smsResponse.text(); 
+                    console.log("SMS Service Response Raw:", smsResponseText);
+                    const match = smsResponseText.match(/>(\d+)</);
+                    const smsResultCode = match ? match[1] : null;
+
+                    if (smsResultCode === "1") {
+                        console.log("SMS sent successfully via Payamak-Panel.");
+                    } else {
+                        console.warn("SMS sending failed or API returned an error code:", smsResultCode, "Full response:", smsResponseText);
+                    }
+                } catch (smsError) {
+                    console.error("Error calling SMS service:", smsError);
+                } finally {
+                     navigateToListStep(2); 
+                }
+
+            } catch (e) { 
+                console.error("Error saving user OTP to Firestore:", e);
+                displayListError(1, "خطا در ذخیره کد تایید. لطفا دوباره تلاش کنید.");
+                navigateToListStep(2); 
+            } finally {
+                setListLoading(1, false);
+            }
+        }
+        function setupStep1() {
+            const btn = document.getElementById('btnGetUserOtp');
+            if(btn) btn.onclick = handleGetUserOtp;
+            else console.error("Button btnGetUserOtp not found");
+        }
+
+        // --- Step 2: OTP Verification ---
+        async function handleUserOtpVerification() {
+            clearListError(2);
+            setListLoading(2, true);
+            const enteredOtp = toEnglishNum(document.getElementById('userOtpInput').value.trim());
+
+            if (!db || !isUserAuthReady || !auth.currentUser) {
+                 displayListError(2, "پایگاه داده یا احراز هویت آماده نیست.");
+                 setListLoading(2, false);
+                 return;
+            }
+
+            const otpDocRef = doc(db, 'artifacts', thisAppId, 'public', 'data', 'userOtps', userPhoneNumber);
+            try {
+                const otpDocSnap = await getDoc(otpDocRef);
+                if (!otpDocSnap.exists()) {
+                    displayListError(2, "کد تایید نامعتبر یا منقضی شده است.");
+                    setListLoading(2, false);
+                    return;
+                }
+
+                const otpData = otpDocSnap.data();
+                const storedOtpCode = otpData.otpCode;
+                const expiresAtTimestamp = otpData.expiresAt;
+
+                if (Timestamp.now().seconds > expiresAtTimestamp.seconds) {
+                    displayListError(2, "کد تایید منقضی شده است.");
+                    await deleteDoc(otpDocRef); 
+                    setListLoading(2, false);
+                    return;
+                }
+
+                if (enteredOtp !== storedOtpCode) { 
+                    displayListError(2, "کد تایید نامعتبر است."); 
+                    setListLoading(2, false); 
+                    return;
+                }
+                
+                await deleteDoc(otpDocRef); 
+                console.log("User OTP verified and deleted for", userPhoneNumber);
+                
+                const customerProfileRef = doc(db, 'artifacts', reservationUserAppId, 'public', 'data', 'customerProfiles', userPhoneNumber);
+                const docSnap = await getDoc(customerProfileRef);
+                if (docSnap.exists()) {
+                    currentCustomerProfileData = docSnap.data();
+                } else {
+                    currentCustomerProfileData = { phoneNumber: userPhoneNumber, name: "" }; 
+                    await setDoc(customerProfileRef, currentCustomerProfileData);
+                }
+                navigateToListStep(3); 
+            } catch (e) {
+                console.error("Error during user OTP verification:", e);
+                displayListError(2, "خطا در پردازش کد تایید: " + e.message);
+            } finally {
+                setListLoading(2, false);
+            }
+        }
+        function setupStep2() {
+            const btnBack = document.getElementById('btnBackToUserMobileInput');
+            if(btnBack) btnBack.onclick = () => navigateToListStep(1);
+            else console.error("Button btnBackToUserMobileInput not found");
+
+            const btnVerify = document.getElementById('btnVerifyUserOtp');
+            if(btnVerify) btnVerify.onclick = handleUserOtpVerification;
+            else console.error("Button btnVerifyUserOtp not found");
+        }
+        
+        // --- Step 3: User Options Menu ---
+        function setupStep3() {
+            const btnUpdateProfile = document.getElementById('btnGoToUpdateProfile');
+            if(btnUpdateProfile) btnUpdateProfile.onclick = () => {
+                navigateToListStep(5); // Step 5 is Update Profile
+                populateUserProfileForm();
+            }; else console.error("Button btnGoToUpdateProfile not found");
+
+            const btnManageBookings = document.getElementById('btnGoToManageBookings');
+            if(btnManageBookings) btnManageBookings.onclick = async () => {
+                navigateToListStep(6); // Step 6 is Bookings List
+                await fetchUserBookings();
+            }; else console.error("Button btnGoToManageBookings not found");
+            
+            const btnGoToVisitedSalons = document.getElementById('btnGoToVisitedSalons');
+            if(btnGoToVisitedSalons) btnGoToVisitedSalons.onclick = async () => {
+                navigateToListStep(4); // Step 4 is Visited Salons
+                await fetchAndDisplayVisitedSalons();
+            }; else console.error("Button btnGoToVisitedSalons not found");
+
+
+            const btnContactAdmin = document.getElementById('btnContactSiteAdmin');
+            if(btnContactAdmin) btnContactAdmin.onclick = () => {
+                 showMessage("برای تماس با مدیر سایت، با شماره 09122136866 تماس بگیرید."); 
+            }; else console.error("Button btnContactSiteAdmin not found");
+
+
+            const btnLogoutOptions = document.getElementById('btnLogoutFromOptions');
+            if(btnLogoutOptions) btnLogoutOptions.onclick = handleLogout;
+            else console.error("Button btnLogoutFromOptions not found");
+        }
+        
+        // --- Step 4: Visited Salons List ---
+        async function fetchAndDisplayVisitedSalons() {
+            if (!db || !isUserAuthReady || !auth.currentUser || !userPhoneNumber) {
+                displayListError('4', "ابتدا وارد شوید."); 
+                return;
+            }
+            setListLoading(4, true, 'VisitedSalons'); 
+            clearListError('4'); 
+            const container = document.getElementById('visitedSalonsListContainer');
+            if (!container) {
+                setListLoading(4, false, 'VisitedSalons');
+                return;
+            }
+            container.innerHTML = '';
+            document.getElementById('noVisitedSalonsMessage').style.display = 'none';
+
+            try {
+                const bookingsColRef = collection(db, 'artifacts', reservationUserAppId, 'public', 'data', 'bookings');
+                const userBookingsQuery = query(bookingsColRef, where("customerPhoneNumber", "==", userPhoneNumber));
+                const bookingsSnapshot = await getDocs(userBookingsQuery);
+
+                if (bookingsSnapshot.empty) {
+                    document.getElementById('noVisitedSalonsMessage').style.display = 'block';
+                    setListLoading(4, false, 'VisitedSalons');
+                    return;
+                }
+
+                const salonVisitData = {}; 
+
+                bookingsSnapshot.forEach(doc => {
+                    const booking = doc.data();
+                    if(booking.status === 'cancelled') return; // Skip cancelled bookings for visit counts
+                    
+                    if (!salonVisitData[booking.salonId]) {
+                        salonVisitData[booking.salonId] = { 
+                            salonId: booking.salonId, 
+                            count: 0, 
+                            salonInfo: null, 
+                            userReview: null 
+                        };
+                    }
+                    if(booking.status === 'completed') {
+                         salonVisitData[booking.salonId].count++;
+                    }
+                });
+
+                for (const salonId in salonVisitData) {
+                    // Get Salon Info
+                    if (!salonDetailsCache[salonId]) {
+                         const salonDocRef = doc(db, 'artifacts', reservationUserAppId, 'public', 'data', 'salons', salonId);
+                        const salonSnap = await getDoc(salonDocRef);
+                        if (salonSnap.exists()) {
+                            salonDetailsCache[salonId] = salonSnap.data();
+                        }
+                    }
+                    salonVisitData[salonId].salonInfo = salonDetailsCache[salonId];
+
+                    // Get Salon Review Info
+                    const reviewDocId = `${userPhoneNumber}_${salonId}`; 
+                    const reviewDocRef = doc(db, 'artifacts', thisAppId, 'public', 'data', 'salonReviews', reviewDocId);
+                    const reviewSnap = await getDoc(reviewDocRef);
+                    if (reviewSnap.exists()) {
+                        salonVisitData[salonId].userReview = reviewSnap.data();
+                    }
+                }
+                populateVisitedSalonsList(salonVisitData);
+
+            } catch (e) {
+                console.error("Error fetching visited salons:", e);
+                displayListError('4', "خطا در بارگذاری سالن‌ها: " + e.message); 
+            } finally {
+                setListLoading(4, false, 'VisitedSalons');
+            }
+        }
+
+        function populateVisitedSalonsList(salonVisitData) {
+            const container = document.getElementById('visitedSalonsListContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (Object.keys(salonVisitData).length === 0) {
+                document.getElementById('noVisitedSalonsMessage').style.display = 'block';
+                return;
+            }
+            
+            const profile = currentCustomerProfileData || {};
+
+            for (const salonId in salonVisitData) {
+                const data = salonVisitData[salonId];
+                if (!data.salonInfo) continue; 
+
+                const card = document.createElement('div');
+                card.className = 'visited-salon-card booking-card'; 
+                
+                let reviewButtonText = data.userReview ? "ویرایش نظر" : "ثبت نظر";
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <h3>${data.salonInfo.name}</h3>
+                        <button class="btn-icon btn-secondary btn-share-salon" data-salon-id="${salonId}" data-salon-name="${data.salonInfo.name}" title="اشتراک گذاری">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M13.5 1a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3zM11 2.5a2.5 2.5 0 1 1 .603 1.628l-6.718 3.12a2.499 2.499 0 0 1 0 1.504l6.718 3.12a2.5 2.5 0 1 1-.488.876l-6.718-3.12a2.5 2.5 0 1 1 0-3.256l6.718-3.12A2.5 2.5 0 0 1 11 2.5zm-8.5 4a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1zM13.5 12a.5.5 0 1 0 0 1 .5.5 0 0 0 0-1z"/></svg>
+                        </button>
+                    </div>
+                    <p><strong>آدرس:</strong> ${data.salonInfo.address}</p>
+                    <p><strong>تعداد مراجعه شما:</strong> ${toPersianNum(data.count)}</p>
+                    <p><strong>تعداد افراد معرفی شده:</strong> ${toPersianNum(profile.referralsCount || 0)} نفر</p>
+                    <p><strong>درصد تخفیف شما:</strong> ${toPersianNum(profile.discountPercentage || 0)}٪</p>
+                    <div class="mt-4 flex gap-2">
+                        <button class="btn btn-info btn-small btn-open-review-modal" 
+                                data-salon-id="${salonId}" 
+                                data-salon-name="${data.salonInfo.name}"
+                                data-current-review="${data.userReview?.reviewText || ''}"
+                                data-current-rating="${data.userReview?.rating || 0}">
+                            ${reviewButtonText}
+                        </button>
+                         <a href="nobat.html?sid=${salonId}" target="_blank" class="btn btn-success btn-small">رزرو جدید</a>
+                    </div>
+                `;
+                container.appendChild(card);
+            }
+        }
+        
+        // --- Step 5: Update User Info ---
+        function populateUserProfileForm() {
+            if (!currentCustomerProfileData) {
+                console.warn("Customer profile data not available for editing.");
+                displayListError(5, "اطلاعات کاربر یافت نشد."); 
+                document.getElementById('editUserNameInput').value = '';
+                document.getElementById('editUserMobileDisplay').value = toPersianNum(userPhoneNumber);
+                return;
+            }
+            document.getElementById('editUserNameInput').value = currentCustomerProfileData.name || '';
+            document.getElementById('editUserMobileDisplay').value = toPersianNum(currentCustomerProfileData.phoneNumber || userPhoneNumber);
+        }
+
+        async function handleSaveUserProfile() {
+            clearListError(5); 
+            setListLoading(5, true, 'Profile');
+
+            const newName = document.getElementById('editUserNameInput').value.trim();
+
+            if (!db || !isUserAuthReady || !auth.currentUser || !userPhoneNumber) {
+                displayListError(5, "اطلاعات لازم برای بروزرسانی موجود نیست.");
+                setListLoading(5, false, 'Profile');
+                return;
+            }
+
+            const customerProfileRef = doc(db, 'artifacts', reservationUserAppId, 'public', 'data', 'customerProfiles', userPhoneNumber);
+            
+            try {
+                await firestoreUpdateDoc(customerProfileRef, {
+                    name: newName
+                });
+                if(currentCustomerProfileData) currentCustomerProfileData.name = newName; 
+                showMessage("اطلاعات با موفقیت بروزرسانی شد.");
+                navigateToListStep(3); 
+            } catch (e) {
+                console.error("Error updating user profile:", e);
+                displayListError(5, "خطا در بروزرسانی اطلاعات: " + e.message);
+            } finally {
+                setListLoading(5, false, 'Profile');
+            }
+        }
+
+
+        function setupStep5_update_profile() { 
+            const btnBack = document.getElementById('btnBackToOptionsFromProfile');
+            if(btnBack) btnBack.onclick = () => navigateToListStep(3);
+            else console.error("Button btnBackToOptionsFromProfile not found");
+
+            const btnSave = document.getElementById('btnSaveUserProfile');
+            if(btnSave) btnSave.onclick = handleSaveUserProfile;
+            else console.error("Button btnSaveUserProfile not found");
+        }
+
+
+        // --- Step 6: Display User Bookings ---
+        function updateBookingListTabs() {
+            const futureBtn = document.getElementById('btnFutureBookingsTab');
+            const completedBtn = document.getElementById('btnCompletedBookingsTab');
+            const cancelledBtn = document.getElementById('btnCancelledBookingsTab');
+            if(!futureBtn || !completedBtn || !cancelledBtn) return;
+
+            futureBtn.classList.remove('active');
+            completedBtn.classList.remove('active');
+            cancelledBtn.classList.remove('active');
+
+            if (activeBookingsListTab === 'future') {
+                futureBtn.classList.add('active');
+            } else if (activeBookingsListTab === 'completed') {
+                completedBtn.classList.add('active');
+            } else { // cancelled
+                cancelledBtn.classList.add('active');
+            }
+        }
+
+        async function fetchUserBookings() {
+            if (!db || !isUserAuthReady || !auth.currentUser || !userPhoneNumber) {
+                displayListError(6, "اطلاعات لازم برای بارگذاری رزروها موجود نیست."); 
+                return;
+            }
+            setListLoading(6, true, 'Bookings'); 
+            clearListError(6); 
+            
+            if (bookingsDisplayAreaForStep6DOM) bookingsDisplayAreaForStep6DOM.innerHTML = ''; 
+            if (noBookingsInListMessageForStep6DOM) noBookingsInListMessageForStep6DOM.style.display = 'none';
+
+            let fetchedBookings = []; 
+            const bookingsPath = `artifacts/${reservationUserAppId}/public/data/bookings`; 
+            
+            try {
+                const bookingsColRef = collection(db, 'artifacts', reservationUserAppId, 'public', 'data', 'bookings');
+                const q = query(bookingsColRef, where("customerPhoneNumber", "==", userPhoneNumber));
+                const querySnapshot = await getDocs(q);
+                
+                const salonIds = new Set();
+                querySnapshot.forEach(doc => {
+                    const booking = doc.data();
+                    fetchedBookings.push({ ...booking, docId: doc.id });
+                    if(booking.salonId) salonIds.add(booking.salonId);
+                });
+                
+                // Fetch all salon details in one go
+                for (const salonId of salonIds) {
+                    if (!salonDetailsCache[salonId]) {
+                        const salonDocRef = doc(db, 'artifacts', reservationUserAppId, 'public', 'data', 'salons', salonId);
+                        const salonSnap = await getDoc(salonDocRef);
+                        if (salonSnap.exists()) {
+                            salonDetailsCache[salonId] = salonSnap.data();
+                        }
+                    }
+                }
+
+                allUserBookings = fetchedBookings; 
+                filterAndDisplayBookings(); 
+
+            } catch (e) {
+                console.error("Error fetching user bookings:", e);
+                displayListError(6, "خطا در بارگذاری رزروها: " + e.message); 
+            } finally {
+                setListLoading(6, false, 'Bookings'); 
+            }
+        }
+
+        function filterAndDisplayBookings() {
+            if (!bookingsDisplayAreaForStep6DOM) return;
+            bookingsDisplayAreaForStep6DOM.innerHTML = ''; 
+            if(noBookingsInListMessageForStep6DOM) noBookingsInListMessageForStep6DOM.style.display = 'none';
+
+            let bookingsToDisplay = [];
+
+            if (activeBookingsListTab === 'future') {
+                bookingsToDisplay = allUserBookings.filter(b => (!b.status || (b.status !== 'cancelled' && b.status !== 'completed')));
+            } else if (activeBookingsListTab === 'completed') { 
+                bookingsToDisplay = allUserBookings.filter(b => b.status === 'completed');
+            } else { // cancelled
+                bookingsToDisplay = allUserBookings.filter(b => b.status === 'cancelled');
+            }
+            
+            // Sort bookings
+            bookingsToDisplay.sort((a, b) => { 
+                const dateA = a.date;
+                const dateB = b.date;
+                if (dateA < dateB) return activeBookingsListTab === 'future' ? -1 : 1;
+                if (dateA > dateB) return activeBookingsListTab === 'future' ? 1 : -1;
+                
+                const timeA = a.startTime;
+                const timeB = b.startTime;
+                if (timeA < timeB) return activeBookingsListTab === 'future' ? -1 : 1;
+                if (timeA > timeB) return activeBookingsListTab === 'future' ? 1 : -1;
+                return 0;
+            });
+            
+            if (bookingsToDisplay.length === 0) {
+                if(noBookingsInListMessageForStep6DOM) noBookingsInListMessageForStep6DOM.style.display = 'block';
+            } else {
+                populateBookingsList(bookingsToDisplay);
+            }
+        }
+        
+        function populateBookingsList(bookings) {
+            if (!bookingsDisplayAreaForStep6DOM) return;
+            bookingsDisplayAreaForStep6DOM.innerHTML = ''; 
+
+            if(noBookingsInListMessageForStep6DOM) {
+                 noBookingsInListMessageForStep6DOM.style.display = bookings.length === 0 ? 'block' : 'none';
+            }
+           
+            bookings.forEach(booking => {
+                const card = document.createElement('div');
+                card.className = 'booking-card';
+                
+                const salonName = salonDetailsCache[booking.salonId]?.name || 'نامشخص';
+                const servicesCount = booking.services?.length || 0;
+                
+                let paymentInfoHtml = '';
+                if (activeBookingsListTab === 'future') {
+                    paymentInfoHtml = `
+                        <p><strong>مبلغ بیعانه:</strong> ${toPersianNum(booking.depositAmount?.toLocaleString() || 0)} تومان</p>
+                        <p><strong>مبلغ مانده:</strong> ${toPersianNum(booking.remainingAmount?.toLocaleString() || 0)} تومان</p>
+                    `;
+                } else if (activeBookingsListTab === 'completed') {
+                    paymentInfoHtml = `
+                        <p><strong>مبلغ بیعانه:</strong> ${toPersianNum(booking.depositAmount?.toLocaleString() || 0)} تومان</p>
+                        <p><strong>پرداخت حضوری:</strong> ${toPersianNum(booking.finalPaymentReceived?.toLocaleString() || 0)} تومان</p>
+                    `;
+                } else if (activeBookingsListTab === 'cancelled') {
+                    paymentInfoHtml = `
+                        <p><strong>مبلغ بیعانه:</strong> ${toPersianNum(booking.depositAmount?.toLocaleString() || 0)} تومان</p>
+                    `;
+                }
+
+                let actionButtonHtml = '';
+                if (activeBookingsListTab === 'future') {
+                    actionButtonHtml = `<button class="btn btn-danger btn-small mt-3 btn-cancel-booking" data-booking-id="${booking.docId}">لغو رزرو</button>`;
+                } else if (activeBookingsListTab === 'completed') {
+                    const rating = booking.userRating || 0;
+                    actionButtonHtml = `<div class="mt-2"><strong>امتیاز شما:</strong> <div class="star-rating booking-rating inline-flex flex-row-reverse" data-booking-id="${booking.docId}">${generateStars(rating)}</div></div>`;
+                }
+                
+                let cancellationReasonHtml = '';
+                if (booking.status === 'cancelled' && booking.cancellationReason) {
+                    cancellationReasonHtml = `<p class="text-red-600 font-semibold mt-2">دلیل لغو: ${booking.cancellationReason}</p>`;
+                }
+
+                card.innerHTML = `
+                    <h3>${salonName}</h3>
+                    <p><strong>تاریخ:</strong> ${toPersianNum(booking.date)} | <strong>ساعت:</strong> ${toPersianNum(booking.startTime)}</p>
+                    <p><strong>تعداد خدمات:</strong> ${toPersianNum(servicesCount)} مورد</p>
+                    <div class="mt-2">${paymentInfoHtml}</div>
+                    ${cancellationReasonHtml}
+                    <div class="mt-3 flex gap-2 items-center">
+                        <button class="btn btn-primary btn-small btn-details-booking" data-booking-id="${booking.docId}">جزئیات سفارش</button>
+                        ${actionButtonHtml}
+                    </div>
+                `;
+                bookingsDisplayAreaForStep6DOM.appendChild(card);
+            });
+        }
+        
+        function openBookingDetailsModal(bookingId) {
+            const booking = allUserBookings.find(b => b.docId === bookingId);
+            const salon = booking ? salonDetailsCache[booking.salonId] : null;
+
+            if (!booking || !salon) {
+                showMessage("خطا: اطلاعات رزرو یا سالن یافت نشد.");
+                return;
+            }
+
+            document.getElementById('detailsModalTitle').textContent = `جزئیات سفارش - ${salon.name}`;
+            document.getElementById('detailsSalonPhone').textContent = toPersianNum(salon.phone);
+            document.getElementById('detailsSalonAddress').textContent = salon.address;
+            document.getElementById('detailsBookingDateTime').textContent = `${toPersianNum(booking.date)} ساعت ${toPersianNum(booking.startTime)}`;
+            
+            const servicesListEl = document.getElementById('detailsServicesList');
+            servicesListEl.innerHTML = '';
+            if (booking.services && booking.services.length > 0) {
+                 booking.services.forEach(s => {
+                    const li = document.createElement('li');
+                    li.textContent = `${s.name} (${toPersianNum(s.durationHours)} ساعت) - ${toPersianNum(s.price.toLocaleString())} تومان`;
+                    servicesListEl.appendChild(li);
+                });
+            } else {
+                servicesListEl.innerHTML = '<li>خدمتی ثبت نشده است.</li>';
+            }
+
+            document.getElementById('detailsTotal').textContent = toPersianNum(booking.finalPrice?.toLocaleString() || 0);
+            document.getElementById('detailsDeposit').textContent = toPersianNum(booking.depositAmount?.toLocaleString() || 0);
+            document.getElementById('detailsRemaining').textContent = toPersianNum(booking.remainingAmount?.toLocaleString() || 0);
+
+            const finalPaymentRow = document.getElementById('detailsFinalPaymentRow');
+            if (booking.status === 'completed') {
+                document.getElementById('detailsFinalPayment').textContent = toPersianNum(booking.finalPaymentReceived?.toLocaleString() || 0);
+                finalPaymentRow.style.display = 'block';
+            } else {
+                finalPaymentRow.style.display = 'none';
+            }
+
+            const newBookingBtn = document.getElementById('detailsNewBookingBtn');
+            newBookingBtn.href = `nobat.html?sid=${booking.salonId}`;
+
+            bookingDetailsModal.style.display = 'flex';
+        }
+
+        async function handleCancelBooking(bookingId) {
+             if (!db) return;
+             
+             const reason = prompt("لطفاً دلیل لغو رزرو را وارد کنید (اختیاری):");
+             if (reason === null) return; // User pressed cancel on the prompt
+
+             showConfirmDialog("آیا از لغو این رزرو مطمئن هستید؟", async () => {
+                closeConfirmDialog();
+                setListLoading(6, true, 'Bookings');
+                try {
+                    const bookingRef = doc(db, 'artifacts', reservationUserAppId, 'public', 'data', 'bookings', bookingId);
+                    await firestoreUpdateDoc(bookingRef, { 
+                        status: 'cancelled',
+                        cancellationReason: reason || "اعلام نشده توسط کاربر"
+                    });
+                    showMessage("رزرو شما با موفقیت لغو شد.");
+                    await fetchUserBookings(); // Refresh the list
+                } catch(e) {
+                    console.error("Error cancelling booking:", e);
+                    displayListError(6, "خطا در لغو رزرو: " + e.message);
+                } finally {
+                    setListLoading(6, false, 'Bookings');
+                }
+             });
+        }
+        
+        function resetUserSession() { 
+            userPhoneNumber = '';
+            allUserBookings = [];
+            salonDetailsCache = {};
+            currentAppUser = null; 
+            isUserAuthReady = false; 
+            currentCustomerProfileData = null;
+            const userMobileInputEl = document.getElementById('userMobileInput');
+            if(userMobileInputEl) userMobileInputEl.value = '';
+            const userOtpInputEl = document.getElementById('userOtpInput');
+            if(userOtpInputEl) userOtpInputEl.value = '';
+            navigateToListStep(1); 
+        }
+
+
+        function handleLogout() {
+            signOut(auth).then(() => {
+                resetUserSession();
+                showMessage("با موفقیت خارج شدید.");
+            }).catch((error) => {
+                console.error("Error signing out: ", error);
+                showMessage("خطا در خروج از حساب.");
+            });
+        }
+        
+        function setupStep4_visited_salons() { 
+            const btnBack = document.getElementById('btnBackToOptionsFromVisitedSalons');
+             if(btnBack) btnBack.onclick = () => navigateToListStep(3);
+             else console.error("Button btnBackToOptionsFromVisitedSalons not found");
+        }
+
+        function setupStep6_bookings_list() { 
+            const btnFuture = document.getElementById('btnFutureBookingsTab');
+            if(btnFuture) btnFuture.onclick = () => {
+                activeBookingsListTab = 'future';
+                updateBookingListTabs();
+                filterAndDisplayBookings();
+            }; else console.error("Button btnFutureBookingsTab not found in step 6");
+
+            const btnCompleted = document.getElementById('btnCompletedBookingsTab');
+            if(btnCompleted) btnCompleted.onclick = () => {
+                activeBookingsListTab = 'completed';
+                updateBookingListTabs();
+                filterAndDisplayBookings();
+            }; else console.error("Button btnCompletedBookingsTab not found in step 6");
+            
+            const btnCancelled = document.getElementById('btnCancelledBookingsTab');
+            if(btnCancelled) btnCancelled.onclick = () => {
+                activeBookingsListTab = 'cancelled';
+                updateBookingListTabs();
+                filterAndDisplayBookings();
+            }; else console.error("Button btnCancelledBookingsTab not found in step 6");
+            
+            const btnBackToOpts = document.getElementById('btnBackToOptionsFromBookings');
+             if(btnBackToOpts) btnBackToOpts.onclick = () => navigateToListStep(3);
+             else console.error("Button btnBackToOptionsFromBookings not found in step 6");
+             
+             if(bookingsDisplayAreaForStep6DOM) {
+                 bookingsDisplayAreaForStep6DOM.addEventListener('click', (event) => {
+                     const target = event.target;
+                     if(target.classList.contains('btn-cancel-booking')) {
+                         const bookingId = target.dataset.bookingId;
+                         if(bookingId) handleCancelBooking(bookingId);
+                     } else if(target.classList.contains('btn-details-booking')) {
+                          const bookingId = target.dataset.bookingId;
+                         if(bookingId) openBookingDetailsModal(bookingId);
+                     } else if(target.matches('.booking-rating .star')) {
+                         const bookingId = target.parentElement.dataset.bookingId;
+                         const rating = target.dataset.value;
+                         saveBookingRating(bookingId, parseInt(rating));
+                     }
+                 });
+             }
+        }
+        
+        // --- STAR RATING AND REVIEW FUNCTIONS ---
+        function generateStars(rating) {
+            let starsHtml = '';
+            for (let i = 5; i >= 1; i--) {
+                starsHtml += `<span class="star ${i <= rating ? 'selected' : ''}" data-value="${i}">★</span>`;
+            }
+            return starsHtml;
+        }
+
+        async function saveBookingRating(bookingId, rating) {
+            if (!db) return;
+            setListLoading(6, true, 'Bookings');
+            try {
+                const bookingRef = doc(db, 'artifacts', reservationUserAppId, 'public', 'data', 'bookings', bookingId);
+                await firestoreUpdateDoc(bookingRef, { userRating: rating });
+                showMessage("امتیاز شما ثبت شد.");
+                // Update local data and re-render to avoid full refetch
+                const bookingIndex = allUserBookings.findIndex(b => b.docId === bookingId);
+                if (bookingIndex !== -1) {
+                    allUserBookings[bookingIndex].userRating = rating;
+                    filterAndDisplayBookings();
+                }
+            } catch (e) {
+                console.error("Error saving booking rating:", e);
+                displayListError(6, "خطا در ثبت امتیاز.");
+            } finally {
+                 setListLoading(6, false, 'Bookings');
+            }
+        }
+        
+        function openSalonReviewModal(salonId, salonName, currentReview, currentRating) {
+            document.getElementById('reviewModalTitle').textContent = `ثبت نظر برای ${salonName}`;
+            document.getElementById('reviewSalonId').value = salonId;
+            document.getElementById('reviewTextArea').value = currentReview || '';
+            
+            const ratingValueInput = document.getElementById('reviewRatingValue');
+            ratingValueInput.value = currentRating || 0;
+            updateStarSelection(document.getElementById('reviewStarRating'), currentRating || 0);
+            
+            salonReviewModal.style.display = 'flex';
+        }
+
+        function updateStarSelection(starContainer, rating) {
+            const stars = starContainer.querySelectorAll('.star');
+            stars.forEach(star => {
+                star.classList.toggle('selected', star.dataset.value <= rating);
+            });
+        }
+        
+        async function handleSalonReviewSubmit(event) {
+            event.preventDefault();
+            if (!db || !userPhoneNumber) return;
+
+            const salonId = document.getElementById('reviewSalonId').value;
+            const rating = document.getElementById('reviewRatingValue').value;
+            const reviewText = document.getElementById('reviewTextArea').value;
+            const reviewDocId = `${userPhoneNumber}_${salonId}`;
+            const reviewRef = doc(db, 'artifacts', thisAppId, 'public', 'data', 'salonReviews', reviewDocId);
+
+            try {
+                await setDoc(reviewRef, {
+                    salonId: salonId,
+                    rating: parseInt(rating),
+                    reviewText: reviewText.trim(),
+                    userId: userPhoneNumber,
+                    userName: currentCustomerProfileData?.name || "کاربر ناشناس",
+                    timestamp: serverTimestamp()
+                }, { merge: true });
+                showMessage("نظر شما با موفقیت ثبت شد.");
+                salonReviewModal.style.display = 'none';
+                await fetchAndDisplayVisitedSalons(); // Refresh the list to show updated button text
+            } catch (e) {
+                console.error("Error saving salon review:", e);
+                showMessage("خطا در ثبت نظر.");
+            }
+        }
+
+        function handleShareSalonInfo(salonId, salonName) {
+            const salon = salonDetailsCache[salonId];
+            if (!salon) {
+                showMessage("اطلاعات سالن یافت نشد.");
+                return;
+            }
+
+            const pageUrl = `https://api.fanoos.me/nobat.html?sid=${salonId}`;
+            const shareText = `*${salonName}*\n${salon.address}\nتلفن: ${toPersianNum(salon.phone)}\nرزرو از طریق:\n${pageUrl}`;
+
+             if (navigator.share) {
+                navigator.share({ title: `معرفی سالن ${salonName}`, text: shareText, url: pageUrl })
+                    .catch(err => console.error("Error sharing:", err));
+            } else {
+                navigator.clipboard.writeText(shareText).then(() => {
+                     showMessage('اطلاعات سالن کپی شد.');
+                });
+            }
+        }
+
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeUserReservationListFirebase(); 
+            setupStep1(); 
+            setupStep2(); 
+            setupStep3(); 
+            setupStep4_visited_salons(); 
+            setupStep5_update_profile(); 
+            setupStep6_bookings_list(); 
+            
+            // Setup for confirm modal
+            document.getElementById('btnConfirmCancel').onclick = closeConfirmDialog;
+            document.getElementById('btnConfirmOk').onclick = () => {
+                if (typeof confirmCallback === 'function') {
+                    confirmCallback();
+                }
+            };
+            
+            // Setup for details modal
+            document.getElementById('detailsCloseBtn').onclick = () => {
+                bookingDetailsModal.style.display = 'none';
+            };
+            
+             // Setup for salon review modal
+            document.getElementById('reviewCloseBtn').onclick = () => {
+                salonReviewModal.style.display = 'none';
+            };
+            document.getElementById('salonReviewForm').addEventListener('submit', handleSalonReviewSubmit);
+            document.getElementById('reviewStarRating').addEventListener('click', e => {
+                if (e.target.classList.contains('star')) {
+                    const rating = e.target.dataset.value;
+                    document.getElementById('reviewRatingValue').value = rating;
+                    updateStarSelection(e.currentTarget, rating);
+                }
+            });
+            
+             // Delegation for opening review modal from visited salons list
+            if (visitedSalonsListContainerDOM) {
+                 visitedSalonsListContainerDOM.addEventListener('click', (event) => {
+                     const target = event.target.closest('button'); // More robust selector
+                     if (!target) return;
+                     
+                     if (target.classList.contains('btn-open-review-modal')) {
+                         const salonId = target.dataset.salonId;
+                         const salonName = target.dataset.salonName;
+                         const currentReview = target.dataset.currentReview;
+                         const currentRating = target.dataset.currentRating;
+                         openSalonReviewModal(salonId, salonName, currentReview, currentRating);
+                     } else if(target.classList.contains('btn-share-salon')) {
+                         const salonId = target.dataset.salonId;
+                         const salonName = target.dataset.salonName;
+                         handleShareSalonInfo(salonId, salonName);
+                     }
+                 });
+            }
+        });
+
+    </script>
+</body>
+</html>

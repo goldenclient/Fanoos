@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رزرو نوبت سالن</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Vazirmatn', sans-serif; 
+            background-color: #fdf2f8; /* pink-50 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 1rem;
+            color: #374151; /* gray-700 */
+        }
+        .app-container {
+            background-color: white;
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-2xl */
+            width: 100%;
+            max-width: 28rem; /* max-w-md */
+            position: relative; 
+        }
+        .step { display: none; }
+        .step.active { display: block; }
+        .btn {
+            padding: 0.75rem 1rem; /* py-3 px-4 */
+            border-radius: 0.5rem; /* rounded-lg */
+            font-weight: 700; /* font-bold */
+            transition: background-color 0.15s ease-in-out;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            text-align: center;
+        }
+        .btn:disabled {
+            background-color: #9ca3af; /* gray-400 */
+            cursor: not-allowed;
+        }
+        .btn-primary { background-color: #ec4899; color: white; } /* pink-500 */
+        .btn-primary:hover:not(:disabled) { background-color: #db2777; } /* pink-600 */
+        .btn-secondary { background-color: #d1d5db; color: #1f2937; } /* gray-300, gray-800 */
+        .btn-secondary:hover { background-color: #9ca3af; } /* gray-400 */
+        .btn-success { background-color: #22c55e; color: white; } /* green-500 */
+        .btn-success:hover { background-color: #16a34a; } /* green-600 */
+        .btn-info { background-color: #3b82f6; color: white; } /* blue-500 */
+        .btn-info:hover { background-color: #2563eb; } /* blue-600 */
+        .input-field {
+            width: 100%;
+            padding: 0.75rem; /* p-3 */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+        }
+        .error-message { color: #ef4444; /* red-500 */ margin-top: 0.5rem; font-size: 0.875rem; /* text-sm */ }
+        .loading-message { text-align: center; margin-y: 1rem; color: #71717a; } /* zinc-500 */
+        .progress-bar-bg { height: 0.5rem; background-color: #e5e7eb; border-radius: 9999px; /* rounded-full */ margin-bottom: 0.25rem; }
+        .progress-bar { height: 100%; background-color: #ec4899; border-radius: 9999px; transition: width 0.3s ease-out; }
+        
+        .calendar-month-container { margin-bottom: 1.5rem; }
+        .calendar-month-header { text-align: center; font-semibold text-lg text-pink-700 mb-2; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.5rem; text-align: center; margin-bottom: 1rem; }
+        .calendar-day-header { font-medium text-xs text-gray-500; padding: 0.25rem;}
+        .calendar-day { 
+            padding: 0.5rem; 
+            border-radius: 0.5rem; 
+            cursor: pointer; 
+            border: 1px solid #e5e7eb; 
+            transition: background-color 0.15s, border-color 0.15s; 
+            font-size: 0.875rem;
+        }
+        .calendar-day.selected { background-color: #ec4899; color: white; border-color: #ec4899; font-weight: bold; }
+        .calendar-day.disabled { background-color: #f3f4f6; color: #9ca3af; cursor: not-allowed; text-decoration: line-through; }
+        .calendar-day.holiday:not(.disabled) { /* Style for holidays that are not otherwise disabled */ }
+        .calendar-day.disabled.holiday { opacity: 0.7; } /* Holidays that are also disabled (e.g. fully booked Friday) */
+        .calendar-day.current-day { border: 2px solid #db2777; /* pink-600 */ font-weight: bold; }
+        .calendar-day.empty { background-color: transparent; border: none; cursor: default; }
+
+        .time-slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
+        .time-slot-btn { padding: 0.75rem; border-radius: 0.5rem; border: 1px solid #d1d5db; transition: background-color 0.15s, border-color 0.15s; font-size: 0.875rem; }
+        .time-slot-btn.selected { background-color: #ec4899; color: white; border-color: #ec4899; }
+        .time-slot-btn:not(.selected):hover { background-color: #fce7f3; border-color: #f9a8d4; } /* pink-50, pink-300 */
+        
+        .list-item { padding: 1rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; cursor: pointer; transition: all 0.15s ease-in-out; margin-bottom: 0.75rem; }
+        .list-item:hover { background-color: #fce7f3; border-color: #f9a8d4; } /* pink-50, pink-300 */
+        .list-item.selected { background-color: #fce7f3; border-color: #f472b6; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); } /* pink-100, pink-400, shadow-md */
+        
+        .message-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .referral-code-display {
+            background-color: #fce7f3; 
+            border: 1px dashed #f472b6; 
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem; 
+            text-align: center;
+        }
+        .referral-code-text {
+            font-weight: bold;
+            font-size: 1.125rem; 
+            color: #be185d; 
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            user-select: all; 
+        }
+        .salon-card {
+            background-color: #fff;
+            border: 1px solid #e5e7eb; /* gray-200 */
+            border-radius: 0.75rem; /* rounded-xl */
+            padding: 1.5rem; /* p-6 */
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05); /* shadow-lg */
+            margin-bottom: 1.5rem;
+        }
+        .salon-card-title {
+            font-size: 1.875rem; /* text-3xl */
+            font-weight: bold;
+            color: #be185d; /* pink-700 */
+            margin-bottom: 0.25rem; /* mb-1 */
+            text-align: center;
+        }
+        .salon-card-detail {
+            font-size: 1rem; 
+            font-weight: 500; 
+            color: #374151; 
+            margin-bottom: 0.5rem; 
+        }
+        .instagram-icon-button { 
+            padding: 0.5rem; 
+            border-radius: 0.5rem; 
+            background-color: transparent; 
+            color: #E1306C; 
+            transition: background-color 0.15s ease-in-out;
+            display: inline-flex; 
+            align-items: center;
+            justify-content: center;
+        }
+        .instagram-icon-button:hover {
+            background-color: #fce7f3; 
+        }
+        .share-icon-button {
+            padding: 0.5rem; 
+            border-radius: 0.5rem; 
+            background-color: transparent; 
+            color: #ec4899; 
+            transition: background-color 0.15s ease-in-out;
+            display: inline-flex; 
+            align-items: center;
+            justify-content: center;
+        }
+        .share-icon-button:hover {
+            background-color: #fce7f3; 
+        }
+        .salon-card-categories-title {
+            font-size: 1rem; /* text-base */
+            font-weight: 600; /* font-semibold */
+            color: #db2777; /* pink-600 */
+            margin-top: 1rem; /* mt-4 */
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+        .salon-card-category-item {
+            background-color: #fdf2f8; /* pink-50 */
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem; /* rounded-md */
+            font-size: 0.875rem; /* text-sm */
+            color: #9d174d; /* pink-800 */
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+         #initialAppLoading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.125rem; /* text-lg */
+            color: #be185d; /* pink-700 */
+        }
+       
+    </style>
+</head>
+<body>
+    
+    <div id="initialAppLoading" class="loading-message">در حال بارگذاری برنامه...</div>
+
+    <div id="mainAppContainer" class="app-container" style="display: none;">
+        <div id="progressBarContainer" class="mb-6" style="display: none;"> 
+            <div class="progress-bar-bg">
+                <div id="progressBar" class="progress-bar"></div> 
+            </div>
+            <p id="progressText" class="text-xs text-center text-gray-500 mt-1"></p>
+        </div>
+
+        <div id="step1" class="step"> 
+            <h2 class="text-2xl font-semibold mb-6 text-center">سامانه رزرو نوبت قطعی</h2>
+            
+            <div class="flex flex-row gap-2 mb-4">
+                <div class="flex-1">
+                    <select id="categoryFilter" class="input-field w-full">
+                        <option value="همه">همه دسته بندی ها</option>
+                        <option value="پزشکی و سلامت">پزشکی و سلامت</option>
+                        <option value="زیبایی و آرایشی">زیبایی و آرایشی</option>
+                        <option value="حرفه‌ای و مشاوره‌ای">حرفه‌ای و مشاوره‌ای</option>
+                        <option value="خودرو و تعمیرات">خودرو و تعمیرات</option>
+                        <option value="ورزشی و تفریحی">ورزشی و تفریحی</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <select id="cityFilter" class="input-field w-full">
+                        <option value="همه">همه شهر ها</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="salonListContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                </div>
+            <p id="errorStep1" class="error-message"></p>
+            <p id="loadingStep1" class="loading-message" style="display: none;">در حال بارگذاری لیست سالن‌ها...</p>
+            <div class="mt-6 text-center">
+                 <a href="https://api.fanoos.me/useradmin.html" target="_blank" class="btn btn-primary w-full block text-center">همه رزروهای من</a>
+                 <a href="https://api.fanoos.me/admin.html" target="_blank" id="linkBusinessOwner" class="inline-block mt-4 text-sm text-blue-600 hover:underline">خودم صاحب کسب و کار هستم</a>
+            </div>
+        </div>
+
+        <div id="step2" class="step">
+            <div id="salonCardDisplay" class="salon-card">
+                <h3 id="salonCardName" class="salon-card-title"></h3>
+                <p id="salonCardCategoryCity" class="text-xs font-semibold text-blue-600 text-center mb-4"></p>
+                <p id="salonCardAddress" class="salon-card-detail"></p>
+                <p id="salonCardPhone" class="salon-card-detail"></p>
+                <p id="salonCardManager" class="salon-card-detail" style="display:none;"></p>
+                
+                <h4 id="salonCardCategoriesTitle" class="salon-card-categories-title" style="display:none;">دسته‌بندی خدمات:</h4>
+                <div id="salonCardCategoriesList" class="flex flex-wrap">
+                    </div>
+            </div>
+            <div id="step2ButtonsContainer" class="flex items-center gap-2 mt-4">
+                <button id="btnGoToStep3FromCard" class="btn btn-primary flex-grow">رزرو نوبت</button>
+                <a id="salonInstagramButtonLink" href="#" target="_blank" class="instagram-icon-button flex-shrink-0" style="display:none;" title="اینستاگرام">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                </a>
+                 <a id="shareSalonButton" href="#" class="share-icon-button flex-shrink-0" style="display:none;" title="اشتراک گذاری اطلاعات سالن">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-share-2"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                </a>
+            </div>
+            <div class="mt-4 text-center">
+                <a href="https://api.fanoos.me/admin.html" target="_blank" class="inline-block text-xs text-gray-500 hover:underline">خودم صاحب این کسب و کار هستم</a>
+            </div>
+            <p id="errorStep2" class="error-message"></p>
+        </div>
+
+        <div id="step3" class="step">
+            <h2 class="text-2xl font-semibold mb-2 text-center">ورود شماره تماس</h2>
+            <p id="selectedSalonInfoForPhoneStep" class="text-center text-sm text-gray-600 mb-4"></p>
+            <input type="tel" id="phoneNumberInput" placeholder="مثال: 09123456789" class="input-field text-left dir-ltr mb-4" maxlength="11">
+            <div class="flex gap-2">
+                <button id="btnBackToStep2FromPhone" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnGoToStep4FromPhone" class="btn btn-primary flex-1">ادامه</button>
+            </div>
+            <p id="errorStep3" class="error-message"></p>
+        </div>
+
+        <div id="step4" class="step">
+            <h2 class="text-2xl font-semibold mb-4 text-center">کد تایید را وارد کنید</h2>
+            <p id="otpSentTo" class="mb-3 text-center text-sm text-gray-600"></p>
+            <p id="generatedOtpDisplay" class="mb-3 text-center text-sm text-blue-600 font-semibold"></p> 
+            <input type="number" id="otpInput" placeholder="کد ۴ رقمی" class="input-field text-center dir-ltr mb-4" maxlength="4">
+            <div class="flex gap-2">
+                <button id="btnBackToStep3FromOtp" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnGoToStep5FromOtp" class="btn btn-primary flex-1">تایید کد</button>
+            </div>
+            <p id="errorStep4" class="error-message"></p>
+            <p id="loadingStep4" class="loading-message" style="display: none;">در حال تایید...</p>
+        </div>
+
+        <div id="step5" class="step">
+            <h2 class="text-2xl font-semibold mb-4 text-center">اطلاعات مشتری</h2>
+            <div id="customerInfoDisplay" class="bg-pink-50 p-4 rounded-lg mb-6 shadow">
+                <p>شماره تماس: <span id="customerInfoPhone" class="font-semibold"></span></p>
+                <p id="customerInfoNameContainer" style="display:none;">نام: <span id="customerInfoName" class="font-semibold"></span></p>
+                <p>تعداد معرف (توسط شما): <span id="customerInfoReferrals" class="font-semibold"></span></p>
+                <p>تعداد مراجعه قبلی: <span id="customerInfoVisits" class="font-semibold"></span></p>
+                <p>درصد تخفیف شما: <span id="customerInfoDiscount" class="font-semibold text-green-600"></span></p>
+            </div>
+            <div id="myReferralCodeSection" class="referral-code-display" style="display: none;">
+                <p class="text-sm text-gray-700 mb-1" id="myReferralCodeLabel">کد اختصاصی شما برای معرفی دوستان:</p>
+                <p id="myReferralCodeText" class="referral-code-text"></p>
+                <button id="btnCopyMyReferralCode" class="btn btn-secondary btn-sm py-1 px-3 text-xs">کپی کد</button>
+            </div>
+            <div id="customerNameInputContainer" class="mb-4">
+                <label for="customerNameInput" class="block text-sm font-medium text-gray-700 mb-1">نام شما (اختیاری)</label>
+                <input type="text" id="customerNameInput" class="input-field mb-4" placeholder="نام خود را وارد کنید">
+            </div>
+            <div id="enterReferrerCodeSection" class="mb-6" style="display: none;">
+                <label for="referrerCodeInput" id="referrerCodeInputLabel" class="block text-sm font-medium text-gray-700 mb-1">کد معرف (اختیاری)</label>
+                <input type="text" id="referrerCodeInput" class="input-field mb-4" placeholder="کد معرف خود را وارد کنید">
+            </div>
+            <div class="flex gap-2">
+                <button id="btnBackToStep4FromCust" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnProceedFromCustomerInfo" class="btn btn-primary flex-1">انتخاب خدمات</button>
+            </div>
+            <p id="errorStep5" class="error-message"></p>
+            <p id="loadingStep5" class="loading-message" style="display: none;">در حال ذخیره...</p>
+        </div>
+
+        <div id="step6" class="step">
+            <h2 class="text-2xl font-semibold mb-2 text-center">انتخاب دسته‌بندی</h2>
+            <p id="salonNameForCategories" class="text-center text-lg text-gray-600 mb-4"></p>
+            <div id="categoryListContainer" class="space-y-3 max-h-96 overflow-y-auto pr-2">
+                </div>
+            <div class="flex gap-2 mt-6">
+                <button id="btnBackToStep5FromCatList" class="btn btn-secondary flex-1">بازگشت</button>
+                </div>
+            <p id="errorStep6" class="error-message"></p>
+        </div>
+        
+        <div id="step7" class="step">
+            <h2 class="text-2xl font-semibold mb-2 text-center">انتخاب خدمات</h2>
+            <p id="salonAndCategoryInfoForServices" class="text-center text-sm text-gray-600 mb-4"></p>
+            <div id="servicesList" class="space-y-3 mb-6 max-h-96 overflow-y-auto pr-2"></div>
+            <div id="serviceSummary" class="bg-pink-50 p-4 rounded-lg mb-6 shadow" style="display: none;">
+                <h3 class="text-lg font-semibold mb-2 text-pink-800">خلاصه انتخاب:</h3>
+                <p>مجموع قیمت اصلی: <span id="summaryOriginalPrice"></span> تومان</p>
+                <p id="summaryDiscountContainer" style="display:none;">تخفیف شما (<span id="summaryDiscountPercent"></span>٪): <span id="summaryDiscountAmount"></span> تومان</p>
+                <p class="font-bold text-pink-600">مبلغ نهایی: <span id="summaryFinalPrice"></span> تومان</p>
+                <p>مجموع مدت زمان: <span id="summaryTotalDuration"></span> ساعت</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="btnBackToStep6FromServices" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnGoToStep8FromServices" class="btn btn-primary flex-1" disabled>انتخاب تاریخ</button>
+            </div>
+            <p id="errorStep7" class="error-message"></p>
+        </div>
+
+        <div id="step8" class="step">
+            <h2 class="text-2xl font-semibold mb-1 text-center">انتخاب تاریخ مراجعه</h2>
+            <!-- Dynamic Calendars Container -->
+            <div id="calendarsContainer" class="space-y-6"></div> 
+            <div class="flex gap-2 mt-4">
+                <button id="btnBackToStep7FromDate" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnGoToStep9FromDate" class="btn btn-primary flex-1" disabled>انتخاب ساعت</button>
+            </div>
+            <p id="errorStep8" class="error-message"></p>
+        </div>
+
+        <div id="step9" class="step">
+            <h2 class="text-2xl font-semibold mb-1 text-center">انتخاب ساعت مراجعه</h2>
+            <p id="selectedDateInfo" class="text-center text-gray-600 mb-4"></p>
+            <p id="loadingStep9Time" class="loading-message" style="display: none;">در حال بررسی ساعت‌های موجود...</p>
+            <div id="timeSlotsContainer" class="time-slot-grid"></div>
+            <p id="noTimeSlotsMessage" class="text-center my-4 text-orange-600" style="display:none;">متاسفانه هیچ ساعت خالی برای این تاریخ و مدت زمان خدمات شما یافت نشد.</p>
+            <div class="flex gap-2">
+                <button id="btnBackToStep8FromTime" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnGoToStep10FromTime" class="btn btn-primary flex-1" disabled>پرداخت بیعانه</button>
+            </div>
+            <p id="errorStep9" class="error-message"></p>
+        </div>
+
+        <div id="step10" class="step">
+            <h2 class="text-2xl font-semibold mb-6 text-center">پرداخت بیعانه</h2>
+            <div class="bg-pink-50 p-6 rounded-lg shadow mb-6 text-center">
+                <p class="text-lg mb-2">مجموع مبلغ خدمات: <span id="paymentTotalAmount" class="font-bold"></span> تومان</p>
+                <p class="text-xl text-pink-600 font-bold">مبلغ بیعانه (۱۰٪): <span id="paymentDepositAmount" class="font-bold"></span> تومان</p>
+            </div>
+            <p class="text-center text-sm text-gray-500 mb-6">با کلیک بر روی "پرداخت و ثبت نهایی"، به درگاه پرداخت هدایت می‌شوید.</p>
+            <div class="flex gap-2">
+                <button id="btnBackToStep9FromPayment" class="btn btn-secondary flex-1">بازگشت</button>
+                <button id="btnGoToPayment" class="btn btn-success flex-1">پرداخت و ثبت نهایی</button>
+            </div>
+            <p id="errorStep10" class="error-message"></p>
+            <p id="loadingStep10" class="loading-message" style="display: none;">در حال انتقال به درگاه پرداخت...</p>
+        </div>
+
+        <div id="step11" class="step">
+            <div class="text-center">
+                <div id="confirmationIcon"></div>
+                <h2 id="confirmationTitle" class="text-2xl font-semibold mb-3"></h2>
+                <div id="confirmationDetails" class="bg-gray-50 p-4 rounded-lg mb-6 text-right shadow-inner text-sm">
+                    <p id="confSalonName" class="font-bold text-lg mb-2"></p>
+                    <p id="confSalonAddress"></p>
+                    <p id="confSalonPhone"></p>
+                    <hr class="my-3"/>
+                    <p>تاریخ مراجعه: <span id="confDate" class="font-semibold"></span></p>
+                    <p>ساعت مراجعه: <span id="confTime" class="font-semibold"></span></p>
+                    <p>خدمات انتخاب شده:</p>
+                    <ul id="confServicesList" class="list-disc list-inside pr-4 mb-2"></ul>
+                    <p>مبلغ بیعانه پرداخت شده: <span id="confDepositAmount" class="font-semibold"></span> تومان</p>
+                    <p>مبلغ مانده پرداختی: <span id="confRemainingAmount" class="font-semibold"></span> تومان</p>
+                    <p id="confRefIdContainer" style="display:none;">کد رهگیری پرداخت: <span id="confRefId" class="font-semibold"></span></p>
+                    <hr class="my-3"/>
+                     <p class="text-xs text-gray-600">جهت ارسال نظر، مدیریت رزروها و استفاده از تخفیف ها وارد پنل کاربری خود شوید:<br>
+                        <a href="https://api.fanoos.me/adminuser.html" target="_blank" class="text-blue-600 hover:underline">مدیریت رزروها</a>
+                     </p>
+                </div>
+                <a href="https://api.fanoos.me/adminuser.html" target="_blank" class="btn btn-primary w-full block">پنل کاربری و مدیریت رزروهای من</a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-8 text-center text-xs text-gray-500">
+        <p>Vahid Ostadhashemi</p>
+        <p class="mt-1">09122136866</p>
+    </footer>
+
+    <div id="customMessageBox" class="message-box"></div>
+
+    <script type="module">
+        // Firebase Imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeFirestore, getFirestore, doc, getDoc, setDoc, addDoc, collection, query, where, getDocs, updateDoc, runTransaction, setLogLevel, increment, serverTimestamp, Timestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"; 
+
+        // --- Global State and Constants ---
+        let currentStep = 1;
+        let allSalons = [];
+        let selectedSalon = null; 
+        let selectedCategory = null; 
+        let phoneNumber = '';
+        let userEnteredOtp = ''; 
+        let customerData = null; 
+        let referrerCodeInput = ''; 
+        let customerNameInput = '';
+        let selectedServices = [];
+        let selectedDate = null; 
+        let selectedTimeSlot = null; 
+        const OTP_EXPIRATION_MINUTES = 5; 
+        
+        const JALALI_MONTH_NAMES = ["فروردین", "اردیبهشت", "خرداد", "تیر", "مرداد", "شهریور", "مهر", "آبان", "آذر", "دی", "بهمن", "اسفند"];
+        const JALALI_WEEK_DAYS = ["یکشنبه", "دوشنبه", "سه‌شنبه", "چهارشنبه", "پنج‌شنبه", "جمعه", "شنبه"];
+        let dailyBookedSlots = {}; 
+
+        let db, auth, currentUser, isAuthReady = false;
+        let dataSeeded = false; 
+        let salonIdFromUrl = null; 
+        
+        const userFirebaseConfig = {
+            apiKey: "AIzaSyAh45LFZ9wIo17SJFcYU0pMc7u4OoKCQzw",
+            authDomain: "beyaneh-6248e.firebaseapp.com",
+            projectId: "beyaneh-6248e",
+            storageBucket: "beyaneh-6248e.firebasestorage.app",
+            messagingSenderId: "677613588556",
+            appId: "1:677613588556:web:732954add66e552618e4e9"
+        };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userFirebaseConfig;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'salon-booking-html-dev'; 
+        console.log("Using Path AppId:", appId); 
+
+        const stepsDOM = document.querySelectorAll('.step');
+        const progressBarContainerDOM = document.getElementById('progressBarContainer');
+        const progressBarDOM = document.getElementById('progressBar');
+        const progressTextDOM = document.getElementById('progressText');
+        const customMessageBoxDOM = document.getElementById('customMessageBox');
+        const initialAppLoadingDOM = document.getElementById('initialAppLoading');
+        const mainAppContainerDOM = document.getElementById('mainAppContainer');
+
+        // --- Date Conversion Utilities ---
+        function gregorianToJalali(gy, gm, gd) {
+            let g_d_m, jy, jm, jd, gy2, days;
+            g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+            gy2 = (gm > 2) ? (gy + 1) : gy;
+            days = 355666 + (365 * gy) + Math.floor((gy2 + 3) / 4) - Math.floor((gy2 + 99) / 100) + Math.floor((gy2 + 399) / 400) + gd + g_d_m[gm - 1];
+            jy = -1595 + (33 * Math.floor(days / 12053));
+            days %= 12053;
+            jy += 4 * Math.floor(days / 1461);
+            days %= 1461;
+            if (days > 365) {
+                jy += Math.floor((days - 1) / 365);
+                days = (days - 1) % 365;
+            }
+            if (days < 186) {
+                jm = 1 + Math.floor(days / 31);
+                jd = 1 + (days % 31);
+            } else {
+                jm = 7 + Math.floor((days - 186) / 30);
+                jd = 1 + ((days - 186) % 30);
+            }
+            return [jy, jm, jd];
+        }
+
+        function jalaliToGregorian(jy, jm, jd) {
+            let sal_a, gy, gm, gd, days;
+            jy += 1595;
+            days = -355668 + (365 * jy) + (Math.floor(jy / 33) * 8) + Math.floor(((jy % 33) + 3) / 4) + jd + ((jm < 7) ? (jm - 1) * 31 : ((jm - 7) * 30) + 186);
+            gy = 400 * Math.floor(days / 146097);
+            days %= 146097;
+            if (days > 36524) {
+                gy += 100 * Math.floor(--days / 36524);
+                days %= 36524;
+                if (days >= 365) days++;
+            }
+            gy += 4 * Math.floor(days / 1461);
+            days %= 1461;
+            if (days > 365) {
+                gy += Math.floor((days - 1) / 365);
+                days = (days - 1) % 365;
+            }
+            gd = days + 1;
+            sal_a = [0, 31, ((gy % 4 === 0 && gy % 100 !== 0) || (gy % 400 === 0)) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+            for (gm = 0; gm < 13 && gd > sal_a[gm]; gm++) gd -= sal_a[gm];
+            return [gy, gm, gd];
+        }
+
+
+        const toPersianNum = (n) => {
+            if (n === null || n === undefined) return '';
+            const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+            return String(n).replace(/\d/g, d => persianDigits[d]);
+        };
+        const toEnglishNum = (s) => {
+            if (s === null || s === undefined) return '';
+            const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
+            return String(s).replace(/[۰-۹]/g, d => persianDigits.indexOf(d));
+        };
+
+        function showMessage(message, duration = 3000) {
+            customMessageBoxDOM.textContent = message;
+            customMessageBoxDOM.style.display = 'block';
+            setTimeout(() => {
+                customMessageBoxDOM.style.display = 'none';
+            }, duration);
+        }
+
+        function updateProgressBar() {
+            if (!progressBarDOM || !progressTextDOM || !progressBarContainerDOM) return; 
+
+            const actualTotalSteps = 11; 
+            const stepsOffset = 2; 
+            
+            if (currentStep < 3 || currentStep >= 10) { 
+                progressBarContainerDOM.style.display = 'none';
+                return;
+            }
+            progressBarContainerDOM.style.display = 'block';
+
+            const displayTotalSteps = actualTotalSteps - stepsOffset - 1; // -1 for confirmation step
+            const displayCurrentStep = currentStep - stepsOffset;
+            
+            const percentage = (displayCurrentStep / displayTotalSteps) * 100;
+            progressBarDOM.style.width = `${percentage}%`;
+            progressTextDOM.textContent = `مرحله ${toPersianNum(displayCurrentStep)} از ${toPersianNum(displayTotalSteps)}`;
+        }
+
+        function navigateToStep(stepNumber) {
+            stepsDOM.forEach(step => step.classList.remove('active'));
+            const targetStep = document.getElementById(`step${stepNumber}`);
+            if (targetStep) {
+                targetStep.classList.add('active');
+                currentStep = stepNumber;
+                updateProgressBar(); 
+            } else {
+                console.error(`Step ${stepNumber} not found.`);
+            }
+
+            if (currentStep === 2) {
+                const btnGoToStep3 = document.getElementById('btnGoToStep3FromCard');
+                const salonInstagramButtonLink = document.getElementById('salonInstagramButtonLink');
+                const shareButton = document.getElementById('shareSalonButton');
+                
+                if (btnGoToStep3) {
+                    if (salonIdFromUrl) { 
+                        btnGoToStep3.classList.remove('flex-1');
+                        btnGoToStep3.classList.add('w-full'); 
+                    } else {
+                        if (salonInstagramButtonLink && salonInstagramButtonLink.style.display !== 'none') {
+                             btnGoToStep3.classList.add('flex-grow');
+                             btnGoToStep3.classList.remove('w-full');
+                        } else {
+                             btnGoToStep3.classList.add('w-full');
+                             btnGoToStep3.classList.remove('flex-grow');
+                        }
+                    }
+                }
+                if (selectedSalon && selectedSalon.instagramUrl && salonInstagramButtonLink) {
+                    salonInstagramButtonLink.style.display = 'inline-flex'; 
+                } else if (salonInstagramButtonLink) {
+                    salonInstagramButtonLink.style.display = 'none';
+                }
+                if (shareButton) shareButton.style.display = 'inline-flex'; 
+
+            } else {
+                const shareButton = document.getElementById('shareSalonButton');
+                if (shareButton) shareButton.style.display = 'none';
+            }
+
+
+            document.querySelector('.app-container').scrollTop = 0;
+            window.scrollTo({ top: document.querySelector('.app-container').offsetTop - 20, behavior: 'smooth' });
+        }
+
+        function displayError(stepId, message) {
+            const errorEl = document.getElementById(`errorStep${stepId}`);
+            if (errorEl) errorEl.textContent = message;
+            else console.warn(`Error element for step ${stepId} not found.`);
+        }
+        function clearError(stepId) {
+            const errorEl = document.getElementById(`errorStep${stepId}`);
+            if (errorEl) errorEl.textContent = '';
+        }
+        function setLoading(stepId, isLoading, elementIdSuffix = '') {
+            const loadingEl = document.getElementById(`loadingStep${stepId}${elementIdSuffix}`);
+            if (loadingEl) loadingEl.style.display = isLoading ? 'block' : 'none';
+        }
+
+        function generateReferralCode(uid, phone) {
+            const uidPart = uid ? uid.slice(0, 3).toUpperCase() : Math.random().toString(36).substring(2, 5).toUpperCase();
+            const phonePart = phone.slice(-3);
+            return `PARDIS-${uidPart}${phonePart}`;
+        }
+        
+        function copyTextToClipboard(text, successMessage = 'متن در کلیپ‌بورد کپی شد!') {
+            const legacyCopy = () => {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.top = "0";
+                textArea.style.left = "0";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showMessage(successMessage);
+                    } else {
+                        showMessage('خطا در کپی متن.');
+                    }
+                } catch (err) {
+                    showMessage('خطا در کپی متن.');
+                }
+                document.body.removeChild(textArea);
+            };
+
+            if (!navigator.clipboard) {
+                legacyCopy();
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(function() {
+                showMessage(successMessage);
+            }, function(err) {
+                console.warn("Clipboard API failed, falling back to execCommand.", err);
+                legacyCopy();
+            });
+        }
+
+        async function initializeDummySalonData() {
+            if (!db || !auth.currentUser) { 
+                console.log("DB not ready or no user for seeding dummy data. Path AppId:", appId);
+                return;
+            }
+            const salonsPath = `artifacts/${appId}/public/data/salons`;
+            console.log("Checking for existing data in:", salonsPath);
+            const salonsRef = collection(db, 'artifacts', appId, 'public', 'data', 'salons');
+            
+            try {
+                const snapshot = await getDocs(query(salonsRef)); 
+                console.log(`Snapshot from ${salonsPath} received. Size: ${snapshot.size}. Is empty: ${snapshot.empty}`);
+
+                if (snapshot.empty) {
+                    console.log("Salons collection IS EMPTY according to snapshot. Seeding dummy data...");
+                    const dummySalons = [
+                        { 
+                            salonId: "nazbeauty", name: "زیبایی نازبیوتی", 
+                            address: "هفت تیر، بعد از مسجدالجواد", phone: "02188784748",
+                            mobile: "09128542481", managerName: "فاطمه نازپور", isApproved: true, 
+                            instagramUrl: "https://instagram.com/nazbeauty_example", websiteUrl: "https://nazbeauty.example.com",
+                            workHours: { "شنبه": { active: true, start: "09:00", end: "19:00" }, "یکشنبه": { active: true, start: "09:00", end: "19:00" }, "دوشنبه": { active: true, start: "09:00", end: "19:00" }, "سه‌شنبه": { active: true, start: "09:00", end: "19:00" }, "چهارشنبه": { active: true, start: "09:00", end: "19:00" }, "پنج‌شنبه": { active: true, start: "10:00", end: "16:00" }, "جمعه": { active: false, start: "09:00", end: "19:00" } },
+                            categories: [
+                                { id: "naz_nail", name: "خدمات ناخن", services: [
+                                    {"id": "nn1", "name": "کاشت ناخن", "price": 200000, "durationHours": 1},
+                                    {"id": "nn2", "name": "ترمیم ناخن", "price": 180000, "durationHours": 0.5},
+                                ]},
+                                { id: "naz_hair", name: "خدمات مو", services: [
+                                    {"id": "nh1", "name": "کوتاهی مو", "price": 250000, "durationHours": 1},
+                                ]}
+                            ]
+                        },
+                        { 
+                            salonId: "pardisbeauty", name: "زیبایی پردیس", 
+                            address: "تهران، خیابان ولیعصر، پلاک ۱۲۳", phone: "02188888888", 
+                            mobile: "09120000001", managerName: "سارا احمدی", isApproved: true, 
+                            instagramUrl: "https://instagram.com/pardis_example", websiteUrl: "",
+                            workHours: { "شنبه": { active: true, start: "10:00", end: "18:00" }, "یکشنبه": { active: true, start: "10:00", end: "18:00" }, "دوشنبه": { active: true, start: "10:00", end: "18:00" }, "سه‌شنبه": { active: true, start: "10:00", end: "18:00" }, "چهارشنبه": { active: true, start: "10:00", end: "18:00" }, "پنج‌شنبه": { active: true, start: "10:00", end: "14:00" }, "جمعه": { active: false, start: "09:00", end: "19:00" } },
+                            categories: [ 
+                                { id: "pardis_general", name: "خدمات عمومی", services: [
+                                    {"id": "ps1", "name": "کاشت ناخن (پردیس)", "price": 250000, "durationHours": 2},
+                                ]}
+                            ]
+                        }
+                    ];
+                    try {
+                        for (const salon of dummySalons) {
+                            const salonDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'salons', salon.salonId);
+                            await setDoc(salonDocRef, salon);
+                        }
+                        console.log("Dummy salon data seeded successfully.");
+                    } catch (seedError) {
+                        console.error("Error seeding dummy salon data:", seedError);
+                        displayError(1, "خطا در ایجاد داده‌های نمونه سالن.");
+                    }
+                } else {
+                    console.log(`Salons collection is NOT EMPTY (size: ${snapshot.size}). Skipping seed.`);
+                }
+            } catch (error) {
+                console.error(`Error checking or seeding salons at ${salonsPath}:`, error);
+                displayError(1, `خطا در بررسی اطلاعات اولیه سالن‌ها: ${error.message}`);
+            }
+        }
+
+        async function initializeFirebase() {
+            try {
+                console.log("Initializing Firebase with config:", firebaseConfig);
+                const app = initializeApp(firebaseConfig); 
+                db = initializeFirestore(app, {
+                    host: "firestore.fanoos.me", // <-- آدرس پراکسی شما در کلودفلر
+                    ssl: true // Keep this as true
+                });
+                auth = getAuth(app);
+                setLogLevel('debug'); 
+                
+                if(initialAppLoadingDOM) initialAppLoadingDOM.style.display = 'block'; 
+                if(mainAppContainerDOM) mainAppContainerDOM.style.display = 'none';
+                stepsDOM.forEach(step => step.classList.remove('active')); 
+
+                const urlParams = new URLSearchParams(window.location.search);
+                salonIdFromUrl = urlParams.get('sid'); 
+
+                onAuthStateChanged(auth, async (user) => {
+                     setTimeout(async () => { 
+                        if (user) {
+                            currentUser = user;
+                            console.log("User authenticated:", currentUser.uid, "isAnonymous:", currentUser.isAnonymous);
+                        } else {
+                            console.log("No user found, attempting to establish session.");
+                            try {
+                                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) { 
+                                    await signInWithCustomToken(auth, __initial_auth_token);
+                                 } else {
+                                    await signInAnonymously(auth);
+                                 }
+                            } catch (authError) {
+                                console.error("Error during explicit sign-in attempt:", authError);
+                                displayError(1, "خطا در فرآیند احراز هویت.");
+                                if(initialAppLoadingDOM) initialAppLoadingDOM.style.display = 'none';
+                                if(mainAppContainerDOM) mainAppContainerDOM.style.display = 'block';
+                                navigateToStep(1); 
+                                return; 
+                            }
+                        }
+                        
+                        if (auth.currentUser && !isAuthReady) { 
+                            isAuthReady = true;
+                            console.log("Auth is ready. Current user:", auth.currentUser?.uid);
+                            
+                            const paymentAuthority = urlParams.get('Authority');
+                            const paymentStatus = urlParams.get('Status');
+
+                            if (paymentAuthority && paymentStatus) {
+                                await handlePaymentCallback(paymentAuthority, paymentStatus);
+                            } else {
+                                if (!dataSeeded) {
+                                    console.log("Attempting to seed dummy data (if needed)...");
+                                    await initializeDummySalonData(); 
+                                    dataSeeded = true; 
+                                }
+                                
+                                let finalTargetStep = 1; 
+                                let salonSuccessfullyLoadedFromUrl = false;
+
+                                if (salonIdFromUrl) {
+                                    console.log("Salon ID from URL found:", salonIdFromUrl, "Attempting to load it directly.");
+                                    salonSuccessfullyLoadedFromUrl = await loadSalonFromUrl(salonIdFromUrl); 
+                                    if (salonSuccessfullyLoadedFromUrl) {
+                                        finalTargetStep = 2;
+                                    } else { 
+                                        await fetchSalons(); 
+                                        finalTargetStep = 1; 
+                                    }
+                                } else { 
+                                    console.log("No Salon ID in URL. Fetching all approved salons for step 1.");
+                                    await fetchSalons(); 
+                                    finalTargetStep = 1;
+                                }
+                                
+                                if(initialAppLoadingDOM) initialAppLoadingDOM.style.display = 'none'; 
+                                if(mainAppContainerDOM) mainAppContainerDOM.style.display = 'block';
+                                navigateToStep(finalTargetStep); 
+                                
+                                if (finalTargetStep === 2 && salonSuccessfullyLoadedFromUrl) {
+                                    populateSalonBusinessCardStep2(); 
+                                }
+                            }
+                        }
+                    }, 0);
+                });
+            } catch (e) {
+                console.error("Firebase initialization error:", e);
+                displayError(1, "خطا در راه اندازی اولیه برنامه.");
+                isAuthReady = true; 
+                if(initialAppLoadingDOM) initialAppLoadingDOM.style.display = 'none';
+                if(mainAppContainerDOM) mainAppContainerDOM.style.display = 'block';
+                navigateToStep(1); 
+            }
+        }
+
+        async function loadSalonFromUrl(id) {
+            if (!db || !isAuthReady || !auth.currentUser) return false;
+            try {
+                const salonDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'salons', id);
+                const docSnap = await getDoc(salonDocRef);
+                if (docSnap.exists() && docSnap.data().isApproved === true) {
+                    selectedSalon = { id: docSnap.id, ...docSnap.data() };
+                    return true; 
+                } else {
+                    console.log(`Salon with ID ${id} not found or not approved.`);
+                    displayError(1, "سالن مورد نظر یافت نشد یا هنوز تایید نشده است. نمایش لیست همه سالن‌های تایید شده.");
+                    salonIdFromUrl = null; 
+                    return false;
+                }
+            } catch (e) {
+                console.error("Error loading salon from URL:", e);
+                displayError(1, "خطا در بارگذاری اطلاعات سالن.");
+                salonIdFromUrl = null;
+                return false;
+            }
+        }
+        
+        async function fetchSalons() {
+            if (!db || !isAuthReady || !auth.currentUser) { 
+                console.log("Cannot fetch salons: DB not ready, auth not ready, or no user. Path AppId:", appId);
+                displayError(1, "سرویس پایگاه داده یا احراز هویت هنوز آماده نیست.");
+                return;
+            }
+            setLoading(1, true);
+            clearError(1);
+            const salonsPath = `artifacts/${appId}/public/data/salons`;
+            console.log(`Fetching salons from: ${salonsPath}`);
+            try {
+                const salonsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'salons');
+                const q = query(salonsColRef, where("isApproved", "==", true)); 
+                const salonSnapshot = await getDocs(q);
+
+                allSalons = salonSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log("Approved salons fetched in fetchSalons():", allSalons.length, "salons found.");
+                
+                populateCityFilter();
+                applyFiltersAndPopulateSalons();
+
+                if (allSalons.length === 0) { 
+                    if (dataSeeded) { 
+                         displayError(1, "هیچ سالن تایید شده‌ای در پایگاه داده یافت نشد.");
+                    } else { 
+                         displayError(1, "در حال بررسی داده های سالن...");
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching salons:", e);
+                displayError(1, "خطا در بارگذاری لیست سالن‌ها: " + e.message);
+            } finally {
+                setLoading(1, false);
+            }
+        }
+
+        function populateCityFilter() {
+            const cityFilter = document.getElementById('cityFilter');
+            if (!cityFilter) return;
+
+            const uniqueCities = new Set();
+            allSalons.forEach(salon => {
+                if (salon.city) {
+                    uniqueCities.add(salon.city);
+                }
+            });
+
+            while (cityFilter.options.length > 1) {
+                cityFilter.remove(1);
+            }
+            
+            const sortedCities = Array.from(uniqueCities).sort();
+            sortedCities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityFilter.appendChild(option);
+            });
+        }
+
+        function applyFiltersAndPopulateSalons() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const cityFilter = document.getElementById('cityFilter').value;
+
+            let filteredSalons = allSalons;
+
+            if (categoryFilter !== 'همه') {
+                filteredSalons = filteredSalons.filter(salon => salon.mainCategory === categoryFilter);
+            }
+
+            if (cityFilter !== 'همه') {
+                filteredSalons = filteredSalons.filter(salon => salon.city === cityFilter);
+            }
+
+            const shuffled = filteredSalons.sort(() => 0.5 - Math.random());
+            let selected = shuffled.slice(0, 5);
+
+            populateSalonList(selected);
+        }
+
+        function populateSalonList(salonsToDisplay) {
+            const container = document.getElementById('salonListContainer');
+            if(!container) return;
+            container.innerHTML = '';
+            if (salonsToDisplay.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500">هیچ سالنی با این مشخصات یافت نشد.</p>';
+                return;
+            }
+            salonsToDisplay.forEach(salon => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                
+                let detailsHtml = '';
+                const category = salon.mainCategory;
+                const city = salon.city;
+                let detailsText = '';
+
+                if (category && city) {
+                    detailsText = `${category} - ${city}`;
+                } else if (category) {
+                    detailsText = category;
+                } else if (city) {
+                    detailsText = city;
+                }
+
+                if (detailsText) {
+                    detailsHtml = `<p class="text-xs font-semibold text-blue-600">${detailsText}</p>`;
+                }
+
+                let managerInfo = salon.managerName ? `<p class="text-xs text-gray-500 mt-1">مدیر: ${salon.managerName}</p>` : '';
+                
+                div.innerHTML = `
+                    <h3 class="text-lg font-semibold text-pink-700 mb-1">${salon.name}</h3>
+                    ${detailsHtml}
+                    <p class="text-sm text-gray-600 mt-2">${salon.address}</p>
+                    <p class="text-xs text-gray-500 mt-1">تلفن: ${toPersianNum(salon.phone)}</p>
+                    ${managerInfo}
+                `;
+
+                div.onclick = () => handleSalonSelect(salon);
+                container.appendChild(div);
+            });
+        }
+
+        function handleSalonSelect(salon) {
+            selectedSalon = salon;
+            selectedCategory = null;
+            selectedServices = [];
+            selectedDate = null;
+            selectedTimeSlot = null;
+            dailyBookedSlots = {}; 
+            
+            navigateToStep(2); 
+            populateSalonBusinessCardStep2(); 
+        }
+
+        
+        function populateSalonBusinessCardStep2() {
+            if (!selectedSalon) {
+                navigateToStep(1); 
+                return;
+            }
+            document.getElementById('salonCardName').textContent = selectedSalon.name;
+
+            const categoryCityEl = document.getElementById('salonCardCategoryCity');
+            if (categoryCityEl) {
+                let detailsText = '';
+                const category = selectedSalon.mainCategory;
+                const city = selectedSalon.city;
+
+                if (category && city) {
+                    detailsText = `${category} - ${city}`;
+                } else if (category) {
+                    detailsText = category;
+                } else if (city) {
+                    detailsText = city;
+                }
+                
+                if (detailsText) {
+                    categoryCityEl.textContent = detailsText;
+                    categoryCityEl.style.display = 'block';
+                } else {
+                    categoryCityEl.style.display = 'none';
+                }
+            }
+            
+            document.getElementById('salonCardAddress').textContent = `آدرس: ${selectedSalon.address}`;
+            document.getElementById('salonCardPhone').textContent = `تلفن: ${toPersianNum(selectedSalon.phone)}`;
+
+            const managerEl = document.getElementById('salonCardManager');
+            if (managerEl) {
+                if (selectedSalon.managerName) {
+                    managerEl.textContent = `مدیر: ${selectedSalon.managerName}`;
+                    managerEl.style.display = 'block';
+                } else {
+                    managerEl.style.display = 'none';
+                }
+            }
+
+            const instaIconLink = document.getElementById('salonInstagramButtonLink'); 
+            if (instaIconLink) {
+                if (selectedSalon.instagramUrl) {
+                    instaIconLink.href = selectedSalon.instagramUrl;
+                    instaIconLink.style.display = 'inline-flex'; 
+                } else {
+                    instaIconLink.style.display = 'none';
+                }
+            }
+
+            const categoriesTitleEl = document.getElementById('salonCardCategoriesTitle');
+            const categoriesListEl = document.getElementById('salonCardCategoriesList');
+            if(categoriesTitleEl && categoriesListEl){
+                categoriesListEl.innerHTML = ''; 
+                if (selectedSalon.categories && selectedSalon.categories.length > 0) {
+                    categoriesTitleEl.style.display = 'block';
+                    selectedSalon.categories.forEach(cat => {
+                        const catSpan = document.createElement('span');
+                        catSpan.className = 'salon-card-category-item';
+                        catSpan.textContent = cat.name;
+                        categoriesListEl.appendChild(catSpan);
+                    });
+                } else {
+                    categoriesTitleEl.style.display = 'none';
+                }
+            }
+        }
+        
+        function handleShareSalonInfo() {
+            if (!selectedSalon) return;
+
+            let detailsText = '';
+            const category = selectedSalon.mainCategory;
+            const city = selectedSalon.city;
+            if (category && city) {
+                detailsText = `${category} - ${city}`;
+            } else if (category) {
+                detailsText = category;
+            } else if (city) {
+                detailsText = city;
+            }
+
+            const pageUrl = `https://api.fanoos.me/nobat.html?sid=${selectedSalon.id}`;
+
+            const shareText = `* ${selectedSalon.name} *
+${detailsText}
+${selectedSalon.address}
+تلفن: ${toPersianNum(selectedSalon.phone)}
+اطلاعات بیشتر و رزرو: 
+${pageUrl}`.trim();
+
+            if (navigator.share) {
+                navigator.share({ title: `معرفی سالن ${selectedSalon.name}`, text: shareText, url: pageUrl })
+                    .catch(err => {
+                        if (err.name !== 'NotAllowedError') {
+                            console.error("Error sharing:", err);
+                        }
+                        copyTextToClipboard(shareText, 'اشتراک‌گذاری ممکن نبود. اطلاعات سالن کپی شد.'); 
+                    });
+            } else {
+                copyTextToClipboard(shareText, 'اطلاعات سالن کپی شد.');
+            }
+        }
+
+
+        
+        async function handlePhoneNumberSubmit() {
+            clearError(3); 
+            phoneNumber = toEnglishNum(document.getElementById('phoneNumberInput').value);
+            if (!phoneNumber.match(/^09\d{9}$/)) {
+                displayError(3, "لطفا شماره تماس معتبر (مثال: 09123456789) وارد کنید.");
+                return;
+            }
+
+            if (!db || !isAuthReady || !auth.currentUser) {
+                displayError(3, "سرویس پایگاه داده یا احراز هویت هنوز آماده نیست.");
+                return;
+            }
+            setLoading(3, true); 
+
+            const tempGeneratedOtp = String(Math.floor(1000 + Math.random() * 9000));
+            console.log("Generated OTP for step 4:", tempGeneratedOtp);
+            
+            const otpDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'otps', phoneNumber); 
+            const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MINUTES * 60 * 1000);
+
+            try {
+                await setDoc(otpDocRef, {
+                    otpCode: tempGeneratedOtp,
+                    createdAt: serverTimestamp(), 
+                    expiresAt: Timestamp.fromDate(expiresAt) 
+                });
+                console.log(`OTP ${tempGeneratedOtp} saved for ${phoneNumber}, expires at ${expiresAt.toISOString()}`);
+                
+                document.getElementById('otpSentTo').textContent = `کد تایید به شماره ${toPersianNum(phoneNumber)} ارسال شد.`;
+                document.getElementById('generatedOtpDisplay').textContent = `کد تایید شما (برای تست): ${toPersianNum(tempGeneratedOtp)}`;
+                const otpInputEl = document.getElementById('otpInput');
+                if(otpInputEl) otpInputEl.value = ''; 
+                
+                try {
+                                      
+                    const smsApiUrl = 'https://rest.payamak-panel.com/api/SendSMS/SendSMS1';
+                    const smsUsername = '9122136866'; // !!! REPLACE !!!
+                    const smsPassword = 'c403a185-ce2b-4a1c-a0ca-673377f52091'; // !!! REPLACE !!!
+                    const smsSenderNumber = '5000127008044'; // !!! REPLACE !!!
+                    
+                    const smsText = `کد تایید شما برای رزرو سالن: ${tempGeneratedOtp}`;
+
+                    const smsResponse = await fetch(smsApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            'username': smsUsername,
+                            'passWord': smsPassword,
+                            'to': phoneNumber,
+                            'from': smsSenderNumber,
+                            'text': smsText,
+                            'isFlash': 'false'
+                        })
+                    });
+
+                    // try {
+                    // const smsApiUrl = 'https://api.payamak-panel.com/post/Send.asmx?op=SendByBaseNumber2'
+                    // const smsUsername = '9122136866'; // !!! REPLACE !!!
+                    // const smsPassword = 'c403a185-ce2b-4a1c-a0ca-673377f52091'; // !!! REPLACE !!!
+                    // const smsSenderNumber = '5000127008044'; // !!! REPLACE !!!
+                    
+                    // const smsText = `کد تایید شما برای رزرو سالن: ${tempGeneratedOtp}`;
+
+                    // const smsResponse = await fetch(smsApiUrl, {
+                    //     method: 'POST',
+                    //     headers: {
+                    //         'Content-Type': 'application/x-www-form-urlencoded'
+                    //     },
+                    //     body: new URLSearchParams({
+                    //         'username': smsUsername,
+                    //         'passWord': smsPassword,
+                    //         'text': tempGeneratedOtp,
+                    //         'to': phoneNumber,
+                    //         'bodyId': '339184',
+                    //     })
+                    // });
+
+                    const smsResponseText = await smsResponse.text(); 
+                    console.log("SMS Service Response Raw:", smsResponseText);
+                    const match = smsResponseText.match(/>(\d+)</);
+                    const smsResultCode = match ? match[1] : null;
+
+                    if (smsResultCode === "1") {
+                        console.log("SMS sent successfully via Payamak-Panel.");
+                    } else {
+                        console.warn("SMS sending failed or API returned an error code:", smsResultCode, "Full response:", smsResponseText);
+                    }
+                } catch (smsError) {
+                    console.error("Error calling SMS service:", smsError);
+                } finally {
+                     navigateToStep(4); 
+                }
+
+            } catch (e) { 
+                console.error("Error saving user OTP to Firestore:", e);
+                displayError(3, "خطا در ذخیره کد تایید. لطفا دوباره تلاش کنید.");
+                navigateToStep(4); 
+            } finally {
+                setLoading(3, false);
+            }
+        }
+        
+        async function handleUserOtpVerification() { 
+            clearError(4); setLoading(4, true); 
+            userEnteredOtp = toEnglishNum(document.getElementById('otpInput').value); 
+
+            if (!db || !isAuthReady || !auth.currentUser) {
+                 displayError(4, "پایگاه داده یا احراز هویت آماده نیست."); setLoading(4, false); return;
+            }
+
+            const otpDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'otps', phoneNumber);
+            try {
+                const otpDocSnap = await getDoc(otpDocRef);
+
+                if (!otpDocSnap.exists()) {
+                    displayError(4, "کد تایید نامعتبر یا منقضی شده است (یافت نشد).");
+                    setLoading(4, false);
+                    return;
+                }
+
+                const otpData = otpDocSnap.data();
+                const storedOtpCode = otpData.otpCode;
+                const expiresAtTimestamp = otpData.expiresAt; 
+
+                if (Timestamp.now().seconds > expiresAtTimestamp.seconds) {
+                    displayError(4, "کد تایید منقضی شده است.");
+                    await deleteDoc(otpDocRef); 
+                    setLoading(4, false);
+                    return;
+                }
+
+                if (userEnteredOtp !== storedOtpCode) { 
+                    displayError(4, "کد تایید نامعتبر است."); 
+                    setLoading(4, false); 
+                    return;
+                }
+                
+                await deleteDoc(otpDocRef); 
+                console.log("OTP verified and deleted for", phoneNumber);
+
+                const customerProfileRef = doc(db, 'artifacts', appId, 'public', 'data', 'customerProfiles', phoneNumber);
+                const docSnap = await getDoc(customerProfileRef);
+                if (phoneNumber === '09122136866' && selectedSalon?.salonId === 'pardisbeauty') { 
+                    customerData = {
+                        phoneNumber: phoneNumber, name: "الناز", referralsCount: 3, visitsCount: 5,
+                        discountPercentage: 10, referrerCode: "کد نمونه قبلی", myReferralCode: "PARDIS-ELN-866",
+                        isReferrerInfoEditable: false, 
+                    };
+                    await setDoc(customerProfileRef, customerData, { merge: true });
+                } else if (docSnap.exists()) {
+                    customerData = docSnap.data();
+                    customerData.isReferrerInfoEditable = ((customerData.visitsCount || 0) === 0 && !customerData.referrerCode);
+                } else { 
+                    customerData = {
+                        phoneNumber: phoneNumber, name: "", referralsCount: 0, visitsCount: 0,
+                        discountPercentage: 0, referrerCode: "", myReferralCode: "", 
+                        isReferrerInfoEditable: true, 
+                    };
+                }
+                await populateCustomerInfoStep5(); 
+                navigateToStep(5);
+            } catch (e) {
+                console.error("Error during OTP verification or fetching customer data:", e);
+                displayError(4, "خطا در پردازش اطلاعات: " + e.message);
+            } finally {
+                setLoading(4, false);
+            }
+        }
+        
+        async function populateCustomerInfoStep5() {
+             if (!customerData) return;
+            document.getElementById('customerInfoPhone').textContent = toPersianNum(customerData.phoneNumber);
+            if(customerData.name) {
+                document.getElementById('customerInfoName').textContent = customerData.name;
+                document.getElementById('customerInfoNameContainer').style.display = 'block';
+                document.getElementById('customerNameInputContainer').style.display = 'none';
+            } else {
+                document.getElementById('customerInfoNameContainer').style.display = 'none';
+                document.getElementById('customerNameInputContainer').style.display = 'block';
+            }
+            document.getElementById('customerInfoReferrals').textContent = toPersianNum(customerData.referralsCount || 0);
+            document.getElementById('customerInfoVisits').textContent = toPersianNum(customerData.visitsCount || 0);
+            document.getElementById('customerInfoDiscount').textContent = `${toPersianNum(customerData.discountPercentage || 0)}٪`;
+            document.getElementById('customerNameInput').value = customerData.name || '';
+
+            const myReferralCodeSection = document.getElementById('myReferralCodeSection');
+            document.getElementById('myReferralCodeLabel').textContent = "کد اختصاصی شما برای معرفی دوستان:";
+            if (customerData.myReferralCode) { 
+                document.getElementById('myReferralCodeText').textContent = customerData.myReferralCode;
+                myReferralCodeSection.style.display = 'block';
+                document.getElementById('btnCopyMyReferralCode').onclick = () => copyTextToClipboard(customerData.myReferralCode, 'کد معرف شما کپی شد.');
+            } else {
+                 myReferralCodeSection.style.display = 'none';
+            }
+
+            const enterReferrerCodeSection = document.getElementById('enterReferrerCodeSection');
+            const referrerCodeInputEl = document.getElementById('referrerCodeInput');
+            const referrerCodeInputLabelEl = document.getElementById('referrerCodeInputLabel');
+            
+            enterReferrerCodeSection.style.display = 'none'; 
+            referrerCodeInputLabelEl.textContent = ''; 
+            referrerCodeInputEl.style.display = 'none'; 
+
+            if ((customerData.visitsCount || 0) === 0 && !customerData.referrerCode) {
+                enterReferrerCodeSection.style.display = 'block';
+                referrerCodeInputEl.value = ''; 
+                referrerCodeInputEl.disabled = false;
+                referrerCodeInputEl.style.display = 'block'; 
+                referrerCodeInputEl.placeholder = "کد معرف خود را وارد کنید (اختیاری)";
+                referrerCodeInputLabelEl.textContent = "کد معرف (اختیاری)";
+            } else if (customerData.referrerCode) { 
+                enterReferrerCodeSection.style.display = 'block'; 
+                
+                referrerCodeInputLabelEl.innerHTML = `<span class="italic text-gray-500">در حال بررسی نام معرف...</span>`;
+                try {
+                    const referrersQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'customerProfiles'), where("myReferralCode", "==", customerData.referrerCode));
+                    const referrerSnapshot = await getDocs(referrersQuery);
+                    if (!referrerSnapshot.empty) {
+                        const referrerInfo = referrerSnapshot.docs[0].data();
+                        referrerCodeInputLabelEl.textContent = `شما توسط ${referrerInfo.name || 'یک دوست'} معرفی شده‌اید (کد: ${customerData.referrerCode})`;
+                    } else {
+                        console.log(`Referrer with code ${customerData.referrerCode} not found during display.`);
+                        referrerCodeInputLabelEl.textContent = ''; 
+                        enterReferrerCodeSection.style.display = 'none'; 
+                    }
+                } catch(e) {
+                    console.error("Error fetching referrer name for display:", e);
+                    referrerCodeInputLabelEl.textContent = `کد معرفی شده: ${customerData.referrerCode} (خطا در دریافت نام معرف).`;
+                }
+            }
+
+            const btnProceed = document.getElementById('btnProceedFromCustomerInfo');
+            if (btnProceed) btnProceed.textContent = "انتخاب خدمات";
+        }
+        
+        async function handleCustomerDetailsSubmitStep5() { 
+            clearError(5); setLoading(5, true);
+            if (!db || !customerData || !auth.currentUser) {
+                displayError(5, "اطلاعات مشتری یا احراز هویت آماده نیست."); setLoading(5, false); return;
+            }
+            const updatedData = { ...customerData }; 
+            let enteredRefCode = ""; 
+
+            if (!customerData.name) {
+                 updatedData.name = document.getElementById('customerNameInput').value.trim();
+            }
+
+            if ((customerData.visitsCount || 0) === 0 && !customerData.referrerCode) {
+                const referrerCodeInputEl = document.getElementById('referrerCodeInput');
+                if (referrerCodeInputEl.style.display !== 'none' && !referrerCodeInputEl.disabled) {
+                    enteredRefCode = referrerCodeInputEl.value.trim();
+                    if (enteredRefCode) {
+                        updatedData.referrerCode = enteredRefCode; 
+                    }
+                }
+            }
+            
+            try {
+                const customerProfileRef = doc(db, 'artifacts', appId, 'public', 'data', 'customerProfiles', phoneNumber);
+                await setDoc(customerProfileRef, updatedData, { merge: true });
+                customerData = updatedData; 
+
+                if (enteredRefCode && updatedData.referrerCode === enteredRefCode) {
+                    console.log(`New customer ${phoneNumber} used referral code: ${enteredRefCode}. Attempting to update referrer.`);
+                    const referrersQuery = query(collection(db, 'artifacts', appId, 'public', 'data', 'customerProfiles'), where("myReferralCode", "==", enteredRefCode));
+                    const referrerSnapshot = await getDocs(referrersQuery);
+
+                    if (!referrerSnapshot.empty) {
+                        const referrerDoc = referrerSnapshot.docs[0]; 
+                        const referrerDocRef = referrerDoc.ref;
+                        await firestoreUpdateDoc(customerProfileRef, { 
+                            referralsCount: increment(1)
+                        });
+                        console.log(`Successfully incremented referralsCount for referrer ${referrerDoc.id} (code: ${enteredRefCode})`);
+                    } else {
+                        console.log(`Referrer with code ${enteredRefCode} not found. No count incremented.`);
+                    }
+                }
+                
+                if (selectedSalon && selectedSalon.categories && selectedSalon.categories.length === 1) {
+                    selectedCategory = selectedSalon.categories[0];
+                    console.log("Single category found, auto-selecting:", selectedCategory.name);
+                    populateServicesStep7(); 
+                    navigateToStep(7);      
+                } else if (selectedSalon && selectedSalon.categories && selectedSalon.categories.length > 1) {
+                    console.log("Multiple categories found, navigating to category selection.");
+                    populateSalonCategoriesStep6(); 
+                    navigateToStep(6);      
+                } else {
+                    console.log("No categories found for the salon or salon not selected.");
+                    if (selectedSalon) { 
+                        populateSalonCategoriesStep6(); 
+                        navigateToStep(6);
+                    } else {
+                        navigateToStep(1); 
+                    }
+                }
+            } catch (e) {
+                console.error("Error in handleCustomerDetailsSubmitStep5:", e);
+                displayError(5, "خطا در ذخیره اطلاعات یا به‌روزرسانی معرف: " + e.message);
+            } finally {
+                setLoading(5, false);
+            }
+        }
+        
+        function populateSalonCategoriesStep6() { 
+            if (!selectedSalon) {
+                displayError(6, "سالن انتخاب نشده است."); navigateToStep(1); return;
+            }
+            const salonNameEl = document.getElementById('salonNameForCategories');
+            if(salonNameEl) salonNameEl.textContent = selectedSalon.name; 
+            if(salonNameEl) salonNameEl.classList.add('text-lg');
+
+            const container = document.getElementById('categoryListContainer');
+            container.innerHTML = '';
+            if (!selectedSalon.categories || selectedSalon.categories.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500">هیچ دسته‌بندی برای این سالن یافت نشد.</p>';
+                return;
+            }
+            selectedSalon.categories.forEach(category => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.textContent = category.name;
+                div.onclick = () => handleCategorySelectStep6(category); 
+                container.appendChild(div);
+            });
+        }
+
+        function handleCategorySelectStep6(category) { 
+            selectedCategory = category;
+            populateServicesStep7(); 
+            navigateToStep(7);
+        }
+        
+        function populateServicesStep7() { 
+            if (!selectedSalon || !selectedCategory) {
+                if (!selectedCategory && selectedSalon && selectedSalon.categories && selectedSalon.categories.length === 1) {
+                    selectedCategory = selectedSalon.categories[0]; 
+                } else if (!selectedCategory) {
+                    displayError(7, "دسته‌بندی انتخاب نشده است."); 
+                    navigateToStep(6); 
+                    return;
+                }
+            }
+            document.getElementById('salonAndCategoryInfoForServices').textContent = 
+                `${selectedCategory.name} در ${selectedSalon.name}`; 
+
+            const servicesListEl = document.getElementById('servicesList');
+            servicesListEl.innerHTML = ''; 
+            const currentDiscount = customerData?.discountPercentage || 0;
+            
+            if (!selectedCategory.services || selectedCategory.services.length === 0) {
+                servicesListEl.innerHTML = '<p class="text-center text-gray-500">هیچ خدمتی در این دسته‌بندی یافت نشد.</p>';
+                updateServiceSummaryStep7(); return;
+            }
+
+            selectedCategory.services.forEach(service => {
+                const isSelected = selectedServices.find(s => s.id === service.id && s.salonId === selectedSalon.salonId); 
+                const discountedPrice = service.price * (1 - currentDiscount / 100);
+                const serviceDiv = document.createElement('div');
+                serviceDiv.className = `list-item ${isSelected ? 'selected' : ''}`; 
+                serviceDiv.onclick = () => toggleServiceStep7(service); 
+                let priceHtml = currentDiscount > 0 ?
+                    `<span class="line-through mr-2">${toPersianNum(service.price.toLocaleString())} تومان</span><span class="font-semibold text-green-600">${toPersianNum(discountedPrice.toLocaleString())} تومان</span>` :
+                    `<span>${toPersianNum(service.price.toLocaleString())} تومان</span>`;
+                serviceDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-lg font-medium text-pink-700">${service.name}</h3>
+                        ${isSelected ? '<span class="text-pink-500 text-2xl">✓</span>' : ''}
+                    </div>
+                    <div class="text-sm text-gray-600 mt-1">${priceHtml}</div>
+                    <p class="text-xs text-gray-500 mt-1">مدت زمان: ${toPersianNum(service.durationHours)} ساعت</p>`;
+                servicesListEl.appendChild(serviceDiv);
+            });
+            updateServiceSummaryStep7();
+        }
+
+        function toggleServiceStep7(service) { 
+            const serviceWithSalonId = { ...service, salonId: selectedSalon.salonId }; 
+            const index = selectedServices.findIndex(s => s.id === serviceWithSalonId.id && s.salonId === serviceWithSalonId.salonId);
+            if (index > -1) selectedServices.splice(index, 1);
+            else selectedServices.push(serviceWithSalonId);
+            populateServicesStep7(); 
+            updateServiceSummaryStep7();
+        }
+        function updateServiceSummaryStep7() { 
+            const summaryEl = document.getElementById('serviceSummary');
+            const nextButton = document.getElementById('btnGoToStep8FromServices');
+            if (selectedServices.length === 0) {
+                summaryEl.style.display = 'none';
+                nextButton.disabled = true; 
+                return;
+            }
+            summaryEl.style.display = 'block';
+            nextButton.disabled = false; 
+
+            const currentDiscount = customerData?.discountPercentage || 0;
+            const totalOriginalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+            const totalDiscountAmount = (totalOriginalPrice * currentDiscount) / 100;
+            const totalFinalPrice = totalOriginalPrice - totalDiscountAmount;
+            const totalDuration = selectedServices.reduce((sum, s) => sum + s.durationHours, 0);
+
+            document.getElementById('summaryOriginalPrice').textContent = toPersianNum(totalOriginalPrice.toLocaleString());
+            if (currentDiscount > 0) {
+                document.getElementById('summaryDiscountContainer').style.display = 'block';
+                document.getElementById('summaryDiscountPercent').textContent = toPersianNum(currentDiscount);
+                document.getElementById('summaryDiscountAmount').textContent = toPersianNum(totalDiscountAmount.toLocaleString());
+            } else {
+                document.getElementById('summaryDiscountContainer').style.display = 'none';
+            }
+            document.getElementById('summaryFinalPrice').textContent = toPersianNum(totalFinalPrice.toLocaleString());
+            document.getElementById('summaryTotalDuration').textContent = toPersianNum(totalDuration);
+        }
+
+        function handleBackToCategories() {
+            selectedCategory = null; 
+            selectedServices = []; 
+            if (selectedSalon && selectedSalon.categories && selectedSalon.categories.length === 1) {
+                navigateToStep(5);
+            } else {
+                navigateToStep(6); 
+            }
+        }
+        
+        function handleProceedToDateTime() { 
+            if (selectedServices.length === 0) {
+                displayError(7, "حداقل یک خدمت انتخاب کنید."); return;
+            }
+            clearError(7);
+            populateCalendarsStep8(); 
+            navigateToStep(8);
+        }
+
+        function populateCalendarsStep8() { 
+            const calendarsContainer = document.getElementById('calendarsContainer');
+            calendarsContainer.innerHTML = '';
+
+            const today = new Date();
+            // Pass the current Jalali day to the render function
+            const [currentJYear, currentJMonth, currentJDay] = gregorianToJalali(today.getFullYear(), today.getMonth() + 1, today.getDate());
+
+            // Render current month
+            calendarsContainer.appendChild(renderMonthCalendar(currentJYear, currentJMonth, currentJDay));
+
+            // Render next month
+            const nextMonthValue = (currentJMonth === 12) ? 1 : currentJMonth + 1;
+            const nextMonthYear = (currentJMonth === 12) ? currentJYear + 1 : currentJYear;
+            // For the next month, there's no "current day", so pass a value that won't match, like -1
+            const nextMonthCalendar = renderMonthCalendar(nextMonthYear, nextMonthValue, -1); 
+            nextMonthCalendar.classList.add('mt-6');
+            calendarsContainer.appendChild(nextMonthCalendar);
+
+            document.getElementById('btnGoToStep9FromDate').disabled = !selectedDate; 
+        }
+
+        function renderMonthCalendar(year, month, currentJDay) { // month is 1-12
+            const monthContainer = document.createElement('div');
+            monthContainer.className = 'calendar-month-container';
+
+            const monthName = JALALI_MONTH_NAMES[month-1];
+            
+            const [gYear, gMonth, gDay] = jalaliToGregorian(year, month, 1);
+            const firstDayOfWeek = new Date(gYear, gMonth-1, gDay).getDay();
+            const dayOffset = (firstDayOfWeek + 1) % 7; 
+            
+            let daysInThisMonth;
+            if (month <= 6) {
+                daysInThisMonth = 31;
+            } else if (month <= 11) {
+                daysInThisMonth = 30;
+            } else {
+                 const isLeap = (new Date(jalaliToGregorian(year, month, 30)[0], 2, 0).getDate() === 29);
+                 daysInThisMonth = isLeap ? 30 : 29;
+            }
+
+            monthContainer.innerHTML = `
+                <div class="calendar-month-header">${monthName} ${toPersianNum(year)}</div>
+                <div class="calendar-grid">
+                    <div class="calendar-day-header">ش</div><div class="calendar-day-header">ی</div><div class="calendar-day-header">د</div>
+                    <div class="calendar-day-header">س</div><div class="calendar-day-header">چ</div><div class="calendar-day-header">پ</div>
+                    <div class="calendar-day-header">ج</div>
+                </div>
+                <div id="calendar-days-${year}-${month}" class="calendar-grid"></div>
+            `;
+            
+            const daysContainer = monthContainer.querySelector(`#calendar-days-${year}-${month}`);
+            const today = new Date();
+            const [todayJYear, todayJMonth, todayJDay] = gregorianToJalali(today.getFullYear(), today.getMonth() + 1, today.getDate());
+            
+            for (let i = 0; i < dayOffset; i++) { 
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'calendar-day empty';
+                daysContainer.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= daysInThisMonth; day++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'calendar-day';
+
+                let isPastDay = false;
+                if (year < todayJYear || (year === todayJYear && month < todayJMonth) || (year === todayJYear && month === todayJMonth && day < todayJDay)) {
+                    isPastDay = true;
+                }
+
+                const [gY, gM, gD] = jalaliToGregorian(year, month, day);
+                const dayOfWeekIndex = new Date(gY, gM-1, gD).getDay();
+                const dayOfWeekName = JALALI_WEEK_DAYS[dayOfWeekIndex];
+                
+                const workDayInfo = selectedSalon?.workHours?.[dayOfWeekName];
+                const isSelectable = workDayInfo?.active === true && !isPastDay;
+                
+                dayDiv.textContent = toPersianNum(day);
+                if (day === todayJDay && month === todayJMonth && year === todayJYear) {
+                    dayDiv.classList.add('current-day');
+                }
+                
+                if (selectedDate && selectedDate.day === day && selectedDate.monthIndex === month-1 && selectedDate.year === year) {
+                    dayDiv.classList.add('selected');
+                }
+
+                if (isSelectable) {
+                    dayDiv.onclick = () => handleDateSelectStep8(day, month-1, year, monthName);
+                } else {
+                    dayDiv.classList.add('disabled');
+                }
+                daysContainer.appendChild(dayDiv);
+            }
+            return monthContainer;
+        }
+
+
+        function handleDateSelectStep8(day, monthIndex, year, monthName) { 
+            const monthString = String(monthIndex + 1).padStart(2, '0');
+            selectedDate = { day, monthIndex, year, monthName, full: `${toPersianNum(year)}/${toPersianNum(monthString)}/${toPersianNum(String(day).padStart(2,'0'))}` };
+            selectedTimeSlot = null; 
+            populateCalendarsStep8(); 
+        }
+
+        async function handleProceedToTimeSlots() { 
+            if (!selectedDate) { displayError(8, "لطفا یک تاریخ انتخاب کنید."); return; }
+            clearError(8);
+            await populateTimeSlotsStep9(); 
+            navigateToStep(9);
+        }
+
+        async function populateTimeSlotsStep9() { 
+            if (!selectedDate) return;
+            const totalDuration = selectedServices.reduce((sum, s) => sum + s.durationHours, 0);
+            document.getElementById('selectedDateInfo').textContent = 
+                `تاریخ انتخابی: ${selectedDate.full} (مدت زمان خدمات: ${toPersianNum(totalDuration)} ساعت)`;
+            const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+            timeSlotsContainer.innerHTML = '';
+            document.getElementById('btnGoToStep10FromTime').disabled = true;
+
+            const fetchedBookings = await fetchBookingsForDateStep9(selectedDate.full); 
+            const dateKey = `${selectedSalon.id}-${selectedDate.year}-${selectedDate.monthIndex}-${selectedDate.day}`;
+            dailyBookedSlots[dateKey] = fetchedBookings; 
+            
+            const availableTimeSlots = generateTimeSlotsStep9(); 
+            document.getElementById('noTimeSlotsMessage').style.display = availableTimeSlots.length === 0 ? 'block' : 'none';
+            availableTimeSlots.forEach(slot => {
+                const slotButton = document.createElement('button');
+                slotButton.className = 'time-slot-btn';
+                slotButton.textContent = toPersianNum(slot);
+                if (selectedTimeSlot === slot) slotButton.classList.add('selected');
+                slotButton.onclick = () => { 
+                    selectedTimeSlot = slot; 
+                    populateTimeSlotsStep9(); 
+                }; 
+                timeSlotsContainer.appendChild(slotButton);
+            });
+            if(selectedTimeSlot){
+                document.getElementById('btnGoToStep10FromTime').disabled = false; 
+            }
+        }
+        
+        async function fetchBookingsForDateStep9(dateStr) { 
+            if (!db || !dateStr || !selectedSalon || !auth.currentUser) { 
+                 console.log("Cannot fetch bookings: missing db, dateStr, selectedSalon, or user not authenticated.");
+                 return [];
+            }
+            setLoading(9, true, 'Time'); 
+            document.getElementById('noTimeSlotsMessage').style.display = 'none';
+            try {
+                const bookingsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
+                const q = query(bookingsColRef, where("date", "==", dateStr), where("salonId", "==", selectedSalon.id)); 
+                const querySnapshot = await getDocs(q);
+                const bookings = [];
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    // **CHANGE**: Only consider bookings that are NOT cancelled
+                    if (data.status !== 'cancelled') {
+                        bookings.push({ 
+                            start: parseFloat(data.startTime.split(':')[0]) + parseFloat(data.startTime.split(':')[1])/60,
+                            end: parseFloat(data.endTime.split(':')[0]) + parseFloat(data.endTime.split(':')[1])/60,
+                        });
+                    }
+                });
+                return bookings;
+            } catch (e) {
+                displayError(9,"خطا در دریافت رزروهای قبلی: " + e.message); 
+                return [];
+            } finally {
+                setLoading(9, false, 'Time'); 
+            }
+        }
+        
+        function generateTimeSlotsStep9() { 
+            const totalDuration = selectedServices.reduce((sum, s) => sum + s.durationHours, 0);
+            if (!selectedDate || totalDuration === 0) return [];
+
+            const [gYear, gMonth, gDay] = jalaliToGregorian(selectedDate.year, selectedDate.monthIndex + 1, selectedDate.day);
+            const dayOfWeekIndex = new Date(gYear, gMonth-1, gDay).getDay();
+            const dayOfWeekName = JALALI_WEEK_DAYS[dayOfWeekIndex];
+            const workDayInfo = selectedSalon?.workHours?.[dayOfWeekName];
+
+            if (!workDayInfo || !workDayInfo.active) {
+                return []; 
+            }
+
+            const slots = [];
+            const workStartHour = parseFloat(workDayInfo.start.split(':')[0]);
+            const workStartMinute = parseFloat(workDayInfo.start.split(':')[1]);
+            const workEndHour = parseFloat(workDayInfo.end.split(':')[0]);
+            const workEndMinute = parseFloat(workDayInfo.end.split(':')[1]);
+            const workEndDecimal = workEndHour + workEndMinute / 60;
+            const slotIntervalMinutes = 30; 
+            const dateKey = `${selectedSalon.id}-${selectedDate.year}-${selectedDate.monthIndex}-${selectedDate.day}`; 
+            const bookedForDay = dailyBookedSlots[dateKey] || [];
+
+            const today = new Date();
+            const [todayJYear, todayJMonth, todayJDay] = gregorianToJalali(today.getFullYear(), today.getMonth() + 1, today.getDate());
+            const isToday = selectedDate.year === todayJYear && (selectedDate.monthIndex + 1) === todayJMonth && selectedDate.day === todayJDay;
+
+            let nowDecimal = -1;
+            if (isToday) {
+                const bufferMinutes = 15;
+                const nowWithBuffer = new Date(today.getTime() + bufferMinutes * 60000);
+                nowDecimal = nowWithBuffer.getHours() + nowWithBuffer.getMinutes() / 60;
+            }
+
+            let currentTime = workStartHour + workStartMinute / 60;
+
+            while(currentTime + totalDuration <= workEndDecimal) {
+                const slotStartDecimal = currentTime;
+                
+                if (isToday && slotStartDecimal < nowDecimal) {
+                    currentTime += slotIntervalMinutes / 60;
+                    continue; 
+                }
+                
+                const slotEndDecimal = slotStartDecimal + totalDuration;
+                
+                let isOverlapping = false;
+                for (const booking of bookedForDay) {
+                    if (Math.max(slotStartDecimal, booking.start) < Math.min(slotEndDecimal, booking.end)) {
+                        isOverlapping = true; break;
+                    }
+                }
+                
+                if (!isOverlapping) {
+                    const hour = Math.floor(slotStartDecimal);
+                    const minute = (slotStartDecimal - hour) * 60;
+                    slots.push(`${String(hour).padStart(2, '0')}:${String(Math.round(minute)).padStart(2, '0')}`);
+                }
+                
+                currentTime += slotIntervalMinutes / 60;
+            }
+            return slots;
+        }
+
+        function handleProceedToPayment() { 
+            if (!selectedTimeSlot) { displayError(9, "لطفا یک ساعت انتخاب کنید."); return; }
+            clearError(9);
+            
+            const bookingContext = {
+                selectedSalon,
+                selectedCategory,
+                phoneNumber,
+                customerData,
+                selectedServices,
+                selectedDate,
+                selectedTimeSlot,
+            };
+            localStorage.setItem('bookingContext', JSON.stringify(bookingContext));
+            
+            populatePaymentStep10();
+            navigateToStep(10); 
+        }
+
+        function populatePaymentStep10() { 
+            const currentDiscount = customerData?.discountPercentage || 0;
+            const totalOriginalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+            const totalDiscountAmount = (totalOriginalPrice * currentDiscount) / 100;
+            const totalFinalPrice = totalOriginalPrice - totalDiscountAmount;
+            const depositAmount = Math.round(totalFinalPrice * 0.10);
+            document.getElementById('paymentTotalAmount').textContent = toPersianNum(totalFinalPrice.toLocaleString());
+            document.getElementById('paymentDepositAmount').textContent = toPersianNum(depositAmount.toLocaleString());
+        }
+        
+        async function requestZarinpalPayment() { 
+            clearError(10);
+            setLoading(10, true);
+
+            const context = JSON.parse(localStorage.getItem('bookingContext'));
+            if (!context) {
+                displayError(10, "اطلاعات رزرو یافت نشد. لطفا مراحل را از ابتدا طی کنید.");
+                setLoading(10, false);
+                return;
+            }
+
+            const { selectedServices, customerData, phoneNumber, selectedSalon } = context;
+            const currentDiscount = customerData?.discountPercentage || 0;
+            const totalOriginalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+            const totalDiscountAmount = (totalOriginalPrice * currentDiscount) / 100;
+            const totalFinalPrice = totalOriginalPrice - totalDiscountAmount;
+            const depositAmount = Math.round(totalFinalPrice * 0.10);
+
+            
+            
+            const payload = {
+                amount: depositAmount*10,
+                description: `بیعانه رزرو برای ${selectedSalon.name}`,
+                back_url: `https://api.fanoos.me/nobat.html`, 
+                metadata: { mobile: phoneNumber, email: "user@example.com" } // Email is optional
+            };
+
+            try {
+
+                const SERVERLESS_FUNCTION_URL = 'https://zarinpal-proxy.grifline.workers.dev/';
+                const response = await fetch(SERVERLESS_FUNCTION_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload) // ارسال payload صحیح
+                });
+                const result = await response.json();
+                if (response.ok && result.paymentUrl) {
+                    // 2. اگر موفق بود، Worker لینک نهایی را به ما داده است.
+                    // نیازی به کار اضافه نیست، فقط کاربر را هدایت کنید.
+                    console.log("در حال هدایت به درگاه:", result.paymentUrl);
+                    // فراموش نکنید مبلغ را برای مرحله Verify ذخیره کنید
+                    sessionStorage.setItem('paymentAmount', payload.amount);
+                    window.location.href = result.paymentUrl;
+                } else {
+                    // اگر response.ok نباشد یا paymentUrl وجود نداشته باشد، یعنی خطا رخ داده
+                    console.error("خطا در ایجاد پرداخت:", result.error || "پاسخ نامعتبر از سرور");
+                    displayError(10, `خطا: ${result.error || 'پاسخ نامعتبر'}`);
+                    setLoading(10, false);
+                }
+
+
+            } catch(e) {
+                console.error("Error requesting payment:", e);
+                displayError(10, "خطا در ارتباط با درگاه پرداخت. این مشکل معمولا به دلیل محدودیت CORS است و باید از طریق سرور انجام شود.");
+                setLoading(10, false);
+            }
+        }
+
+        async function handlePaymentCallback(authority, status) {
+            console.log("Handling payment callback...", {authority, status});
+            const context = JSON.parse(localStorage.getItem('bookingContext'));
+            
+            if (!context) {
+                showMessage("اطلاعات رزرو منقضی شده است. لطفا دوباره تلاش کنید.", 5000);
+                window.history.replaceState({}, document.title, window.location.pathname);
+                navigateToStep(1);
+                return;
+            }
+
+            if (status === 'OK') {
+               
+                const { selectedServices, customerData } = context;
+                const depositAmount = Math.round((selectedServices.reduce((sum, s) => sum + s.price, 0) * (1 - (customerData?.discountPercentage || 0) / 100)) * 0.10);
+                
+                const ZARINPAL_VERIFY_WORKER_URL = "https://zarinpal-verify.grifline.workers.dev";
+                const payloadToWorker = { authority: authority, amount: (depositAmount*10)};
+                const response = await fetch(ZARINPAL_VERIFY_WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payloadToWorker) // ارسال payload صحیح
+                });
+
+                const result = await response.json();
+                if (response.ok && result.status === 'success') {
+                    showMessage("پرداخت با موفقیت تایید شد. در حال ثبت نهایی رزرو...");
+                    // ✅ دسترسی صحیح: ref_id مستقیماً از result خوانده می‌شود
+                    await finalizeBookingAndGoToConfirmation(context, result.ref_id);
+                } else {
+                    // اگر پرداخت ناموفق بود یا خطایی از سمت Worker آمده باشد
+                    const errorMessage = result.message || 'پاسخ نامعتبر از سرور';
+                    showFinalConfirmation(context, null, `پرداخت ناموفق بود: ${errorMessage}`);
+                }
+
+                
+            } else {
+                showFinalConfirmation(context, null, "پرداخت توسط شما لغو شد.");
+            }
+        }
+
+        async function finalizeBookingAndGoToConfirmation(context, refId) { 
+            const { selectedSalon, customerData, phoneNumber, selectedDate, selectedTimeSlot, selectedServices } = context;
+
+            if (!db || !selectedDate || !selectedTimeSlot || selectedServices.length === 0 || !customerData || !selectedSalon || !auth.currentUser) {
+                showFinalConfirmation(context, refId, "اطلاعات رزرو ناقص است. با پشتیبانی تماس بگیرید.");
+                return;
+            }
+
+            const totalDuration = selectedServices.reduce((sum, s) => sum + s.durationHours, 0);
+            const currentDiscount = customerData?.discountPercentage || 0;
+            const totalOriginalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
+            const totalDiscountAmount = (totalOriginalPrice * currentDiscount) / 100;
+            const totalFinalPrice = totalOriginalPrice - totalDiscountAmount;
+            const depositAmount = Math.round(totalFinalPrice * 0.10);
+            const remainingAmount = totalFinalPrice - depositAmount;
+            const startTimeDecimal = parseFloat(selectedTimeSlot.split(':')[0]) + parseFloat(selectedTimeSlot.split(':')[1])/60;
+            const endTimeDecimal = startTimeDecimal + totalDuration;
+            const endHour = Math.floor(endTimeDecimal);
+            const endMinute = Math.round((endTimeDecimal - endHour) * 60);
+            const endTimeFormatted = `${String(endHour).padStart(2,'0')}:${String(endMinute).padStart(2,'0')}`;
+            
+            const bookingData = {
+                salonId: selectedSalon.id, 
+                customerPhoneNumber: phoneNumber,
+                customerName: customerData.name || "مشتری",
+                date: selectedDate.full,
+                startTime: selectedTimeSlot,
+                endTime: endTimeFormatted,
+                services: selectedServices.map(s => ({id: s.id, name: s.name, price: s.price, durationHours: s.durationHours})), 
+                totalOriginalPrice, 
+                discountApplied: totalDiscountAmount, 
+                finalPrice: totalFinalPrice, 
+                depositAmount,
+                remainingAmount, 
+                totalDurationHours: totalDuration,
+                bookingTimestamp: new Date().toISOString(),
+                paymentRefId: refId,
+                paymentStatus: 'PAID',
+                userId: currentUser.uid,
+                appId: appId, 
+            };
+
+            try {
+                const bookingsColRef = collection(db, 'artifacts', appId, 'public', 'data', 'bookings');
+                await addDoc(bookingsColRef, bookingData);
+                
+                const customerProfileRef = doc(db, 'artifacts', appId, 'public', 'data', 'customerProfiles', phoneNumber);
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(customerProfileRef);
+                    let newVisitsCount = 1;
+                    let myNewReferralCode = customerData.myReferralCode || "";
+                    if (sfDoc.exists()) {
+                        const data = sfDoc.data();
+                        newVisitsCount = (data.visitsCount || 0) + 1;
+                        if (newVisitsCount === 1 && !data.myReferralCode) { 
+                            myNewReferralCode = generateReferralCode(currentUser.uid, phoneNumber);
+                        } else { myNewReferralCode = data.myReferralCode || myNewReferralCode; }
+                        transaction.update(customerProfileRef, { visitsCount: newVisitsCount, myReferralCode: myNewReferralCode });
+                    } else { 
+                        myNewReferralCode = generateReferralCode(currentUser.uid, phoneNumber);
+                        transaction.set(customerProfileRef, { visitsCount: newVisitsCount, name: customerData.name || "مشتری", phoneNumber: phoneNumber, myReferralCode: myNewReferralCode });
+                    }
+                });
+                
+                showFinalConfirmation(context, refId, null);
+                
+            } catch (e) {
+                console.error("Error finalizing booking:", e);
+                showFinalConfirmation(context, refId, `پرداخت شما موفق بود اما در ثبت نهایی رزرو خطایی رخ داد. لطفا با پشتیبانی تماس بگیرید. کد رهگیری: ${refId}`);
+            } finally {
+                localStorage.removeItem('bookingContext');
+            }
+        }
+
+        function showFinalConfirmation(context, refId, errorMessage = null) {
+            const { selectedSalon, selectedDate, selectedTimeSlot, selectedServices, customerData } = context;
+            const confIcon = document.getElementById('confirmationIcon');
+            const confTitle = document.getElementById('confirmationTitle');
+            const confDetails = document.getElementById('confirmationDetails');
+            
+            if(errorMessage) {
+                confIcon.innerHTML = `<svg class="mx-auto w-16 h-16 mb-4 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>`;
+                confTitle.textContent = "پرداخت ناموفق";
+                confTitle.className = "text-2xl font-semibold mb-3 text-red-600";
+                confDetails.innerHTML = `<p class="text-center">${errorMessage}</p>`;
+            } else {
+                 confIcon.innerHTML = `<svg class="mx-auto w-16 h-16 mb-4 text-green-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 16.17l7.59-7.59L19 10l-9 9z"></path></svg>`;
+                confTitle.textContent = "ثبت با موفقیت انجام شد!";
+                confTitle.className = "text-2xl font-semibold mb-3 text-green-600";
+                populateConfirmationStep11(context, refId);
+            }
+            
+            if(initialAppLoadingDOM) initialAppLoadingDOM.style.display = 'none';
+            if(mainAppContainerDOM) mainAppContainerDOM.style.display = 'block';
+            navigateToStep(11);
+            window.history.replaceState({}, document.title, window.location.pathname); // Clean URL
+        }
+
+        function populateConfirmationStep11(context = null, refId = null) { 
+            const data = context || { selectedSalon, selectedDate, selectedTimeSlot, selectedServices, customerData };
+            if (!data.selectedSalon) return; 
+
+            const currentDiscount = data.customerData?.discountPercentage || 0;
+            const totalOriginalPrice = data.selectedServices.reduce((sum, s) => sum + s.price, 0);
+            const totalDiscountAmount = (totalOriginalPrice * currentDiscount) / 100;
+            const totalFinalPrice = totalOriginalPrice - totalDiscountAmount;
+            const depositAmount = Math.round(totalFinalPrice * 0.10);
+            const remainingAmount = totalFinalPrice - depositAmount;
+
+            document.getElementById('confSalonName').textContent = data.selectedSalon.name;
+            document.getElementById('confSalonAddress').textContent = `آدرس: ${data.selectedSalon.address}`;
+            document.getElementById('confSalonPhone').textContent = `تلفن: ${toPersianNum(data.selectedSalon.phone)}`;
+            document.getElementById('confDate').textContent = data.selectedDate.full; 
+            document.getElementById('confTime').textContent = toPersianNum(data.selectedTimeSlot);
+            document.getElementById('confDepositAmount').textContent = toPersianNum(depositAmount.toLocaleString());
+            document.getElementById('confRemainingAmount').textContent = toPersianNum(remainingAmount.toLocaleString());
+            
+            const confServicesListEl = document.getElementById('confServicesList');
+            confServicesListEl.innerHTML = '';
+            data.selectedServices.forEach(s => {
+                const li = document.createElement('li');
+                li.textContent = `${s.name} (${toPersianNum(s.durationHours)} ساعت)`;
+                confServicesListEl.appendChild(li);
+            });
+            
+            const refIdContainer = document.getElementById('confRefIdContainer');
+            if (refId) {
+                document.getElementById('confRefId').textContent = refId;
+                refIdContainer.style.display = 'block';
+            } else {
+                refIdContainer.style.display = 'none';
+            }
+        }
+        
+        function resetApp() {
+            allSalons = []; selectedSalon = null; selectedCategory = null;
+            phoneNumber = ''; userEnteredOtp = ''; customerData = null; referrerCodeInput = ''; customerNameInput = '';
+            selectedServices = []; selectedDate = null; selectedTimeSlot = null; dailyBookedSlots = {};
+            salonIdFromUrl = null; 
+            localStorage.removeItem('bookingContext');
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            document.getElementById('phoneNumberInput').value = '';
+            document.getElementById('otpInput').value = '';
+            navigateToStep(1);
+            if (isAuthReady && auth.currentUser) { 
+                fetchSalons(); 
+            }
+        }
+        
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            document.getElementById('categoryFilter').addEventListener('change', applyFiltersAndPopulateSalons);
+            document.getElementById('cityFilter').addEventListener('change', applyFiltersAndPopulateSalons);
+            
+            document.getElementById('btnGoToPayment').onclick = requestZarinpalPayment;
+            document.getElementById('btnGoToStep10FromTime').onclick = handleProceedToPayment;
+
+            const appContainer = document.getElementById('mainAppContainer');
+            if(appContainer) {
+                appContainer.addEventListener('click', (event) => {
+                    const target = event.target.closest('button, a'); 
+                    if (!target || target.disabled) return;
+                    
+                    const targetId = target.id;
+                    
+                    switch(targetId) {
+                        case 'linkBusinessOwner':
+                            break;
+                        case 'btnGoToStep3FromCard':
+                            if(selectedSalon) { 
+                                document.getElementById('selectedSalonInfoForPhoneStep').textContent = `رزرو وقت در ${selectedSalon.name}`;
+                            }
+                            navigateToStep(3); 
+                            break;
+                        case 'shareSalonButton':
+                            handleShareSalonInfo();
+                            break;
+                        case 'btnBackToStep2FromPhone':
+                            navigateToStep(2);
+                            break;
+                        case 'btnGoToStep4FromPhone':
+                            handlePhoneNumberSubmit();
+                            break;
+                         case 'btnBackToStep3FromOtp':
+                            navigateToStep(3);
+                            break;
+                        case 'btnGoToStep5FromOtp':
+                            handleUserOtpVerification();
+                            break;
+                        case 'btnBackToStep4FromCust':
+                            navigateToStep(4);
+                            break;
+                        case 'btnProceedFromCustomerInfo':
+                            handleCustomerDetailsSubmitStep5();
+                            break;
+                        case 'btnBackToStep5FromCatList':
+                            navigateToStep(5);
+                            break;
+                         case 'btnBackToStep6FromServices':
+                             handleBackToCategories();
+                             break;
+                         case 'btnGoToStep8FromServices':
+                             handleProceedToDateTime();
+                             break;
+                         case 'btnBackToStep7FromDate':
+                             navigateToStep(7);
+                             break;
+                         case 'btnGoToStep9FromDate':
+                             handleProceedToTimeSlots();
+                             break;
+                         case 'btnBackToStep8FromTime':
+                             navigateToStep(8);
+                             break;
+                         case 'btnBackToStep9FromPayment':
+                             navigateToStep(9);
+                             break;
+                    }
+                });
+            } else {
+                 console.error("Main app container not found!");
+            }
+            
+            initializeFirebase(); 
+        });
+    </script>
+</body>
+</html>
