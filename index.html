@@ -1117,27 +1117,28 @@ ${pageUrl}`.trim();
                 
                 try {
                                       
-                    const smsApiUrl = 'https://api.payamak-panel.com/post/Send.asmx/SendSimpleSMS';
-                    const smsUsername = '9122136866'; // !!! REPLACE !!!
-                    const smsPassword = 'c403a185-ce2b-4a1c-a0ca-673377f52091'; // !!! REPLACE !!!
-                    const smsSenderNumber = '5000127008044'; // !!! REPLACE !!!
-                    
-                    const smsText = `کد تایید شما برای رزرو سالن: ${tempGeneratedOtp}`;
+                   const workerUrl = 'https://fanoos.me/api/send-sms/'; // Or the full URL: 'https://fanoos.me/api/send-sms/'
 
-                    const smsResponse = await fetch(smsApiUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: new URLSearchParams({
-                            'UserName': smsUsername,
-                            'PassWord': smsPassword,
-                            'From': smsSenderNumber,
-                            'To': phoneNumber,
-                            'Text': smsText,
-                            'IsFlash': 'false'
-                        })
-                    });
+                        const smsText = `کد تایید شما برای رزرو سالن: ${tempGeneratedOtp}`;
+
+                        // Show a loading indicator to the user
+                        console.log('Sending OTP...');
+                        // e.g., document.getElementById('loadingSpinner').style.display = 'block';
+
+                       // try {
+                            const smsResponse = await fetch(workerUrl, {
+                            method: 'POST',
+                            headers: {
+                                // The worker expects JSON
+                                'Content-Type': 'application/json',
+                            },
+                            // Send the dynamic data as a JSON string
+                            body: JSON.stringify({
+                                to: phoneNumber,
+                                text: smsText,
+                            }),
+                            });
+
 
                     // try {
                     // const smsApiUrl = 'https://api.payamak-panel.com/post/Send.asmx?op=SendByBaseNumber2'
