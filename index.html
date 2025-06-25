@@ -1130,12 +1130,12 @@ ${pageUrl}`.trim();
                             'Content-Type': 'application/x-www-form-urlencoded'
                         },
                         body: new URLSearchParams({
-                            'username': smsUsername,
-                            'passWord': smsPassword,
-                            'to': phoneNumber,
-                            'from': smsSenderNumber,
-                            'text': smsText,
-                            'isFlash': 'false'
+                            'UserName': smsUsername,
+                            'PassWord': smsPassword,
+                            'From': smsSenderNumber,
+                            'To': phoneNumber,
+                            'Text': smsText,
+                            'IsFlash': 'false'
                         })
                     });
 
