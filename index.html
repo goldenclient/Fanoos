@@ -1083,76 +1083,109 @@ ${pageUrl}`.trim();
 
         
         async function handlePhoneNumberSubmit() {
-    clearError(3); 
-    const phoneNumber = toEnglishNum(document.getElementById('phoneNumberInput').value);
-    if (!phoneNumber.match(/^09\d{9}$/)) {
-        displayError(3, "لطفا شماره تماس معتبر (مثال: 09123456789) وارد کنید.");
-        return;
-    }
+            clearError(3); 
+            phoneNumber = toEnglishNum(document.getElementById('phoneNumberInput').value);
+            if (!phoneNumber.match(/^09\d{9}$/)) {
+                displayError(3, "لطفا شماره تماس معتبر (مثال: 09123456789) وارد کنید.");
+                return;
+            }
 
-    if (!db || !isAuthReady || !auth.currentUser) {
-        displayError(3, "سرویس پایگاه داده یا احراز هویت هنوز آماده نیست.");
-        return;
-    }
-    setLoading(3, true); 
+            if (!db || !isAuthReady || !auth.currentUser) {
+                displayError(3, "سرویس پایگاه داده یا احراز هویت هنوز آماده نیست.");
+                return;
+            }
+            setLoading(3, true); 
 
-    const tempGeneratedOtp = String(Math.floor(1000 + Math.random() * 9000));
-    const otpDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'otps', phoneNumber); 
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes expiration
+            const tempGeneratedOtp = String(Math.floor(1000 + Math.random() * 9000));
+            console.log("Generated OTP for step 4:", tempGeneratedOtp);
+            
+            const otpDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'otps', phoneNumber); 
+            const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MINUTES * 60 * 1000);
 
-    try {
-        // Step 1: Save OTP to Firestore
-        await setDoc(otpDocRef, {
-            otpCode: tempGeneratedOtp,
-            createdAt: serverTimestamp(), 
-            expiresAt: Timestamp.fromDate(expiresAt) 
-        });
-        console.log(`OTP ${tempGeneratedOtp} saved for ${phoneNumber}`);
+            try {
+                await setDoc(otpDocRef, {
+                    otpCode: tempGeneratedOtp,
+                    createdAt: serverTimestamp(), 
+                    expiresAt: Timestamp.fromDate(expiresAt) 
+                });
+                console.log(`OTP ${tempGeneratedOtp} saved for ${phoneNumber}, expires at ${expiresAt.toISOString()}`);
+                
+                document.getElementById('otpSentTo').textContent = `کد تایید به شماره ${toPersianNum(phoneNumber)} ارسال شد.`;
+                document.getElementById('generatedOtpDisplay').textContent = `کد تایید شما (برای تست): ${toPersianNum(tempGeneratedOtp)}`;
+                const otpInputEl = document.getElementById('otpInput');
+                if(otpInputEl) otpInputEl.value = ''; 
+                
+                try {
+                                      
+                    const smsApiUrl = 'http://api.payamak-panel.com/post/Send.asmx/SendSimpleSMS';
+                    const smsUsername = '9122136866'; // !!! REPLACE !!!
+                    const smsPassword = 'c403a185-ce2b-4a1c-a0ca-673377f52091'; // !!! REPLACE !!!
+                    const smsSenderNumber = '5000127008044'; // !!! REPLACE !!!
+                    
+                    const smsText = `کد تایید شما برای رزرو سالن: ${tempGeneratedOtp}`;
 
-        // Step 2: Call the Cloudflare Worker to send the SMS
-        const smsText = `کد تایید شما برای رزرو سالن: ${tempGeneratedOtp}`;
-        const workerUrl = 'https://payamakotp.grifline.workers.dev/'; // Or better: '/api/send-sms/'
-        
-        const smsResponse = await fetch(workerUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                to: phoneNumber,
-                text: smsText,
-            }),
-        });
-        
-        // ** CORRECTED LOGIC HERE **
-        // The worker sends back JSON, so we must parse it as JSON.
-        const smsResult = await smsResponse.json();
+                    const smsResponse = await fetch(smsApiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams({
+                            'UserName': smsUsername,
+                            'Passord': smsPassword,
+                            'To': phoneNumber,
+                            'From': smsSenderNumber,
+                            'Text': smsText,
+                            'IsFlash': 'false'
+                        })
+                    });
 
-        // Check both the HTTP status and the `success` flag in the JSON body.
-        if (!smsResponse.ok || !smsResult.success) {
-            // Log the actual error returned from the worker.
-            console.warn("SMS sending failed. Worker response:", smsResult.error || 'Unknown worker error');
-            // Optionally, inform the user, but still let them proceed to enter the code.
-        } else {
-            console.log("SMS dispatch request sent successfully via worker.");
+                    // try {
+                    // const smsApiUrl = 'https://api.payamak-panel.com/post/Send.asmx?op=SendByBaseNumber2'
+                    // const smsUsername = '9122136866'; // !!! REPLACE !!!
+                    // const smsPassword = 'c403a185-ce2b-4a1c-a0ca-673377f52091'; // !!! REPLACE !!!
+                    // const smsSenderNumber = '5000127008044'; // !!! REPLACE !!!
+                    
+                    // const smsText = `کد تایید شما برای رزرو سالن: ${tempGeneratedOtp}`;
+
+                    // const smsResponse = await fetch(smsApiUrl, {
+                    //     method: 'POST',
+                    //     headers: {
+                    //         'Content-Type': 'application/x-www-form-urlencoded'
+                    //     },
+                    //     body: new URLSearchParams({
+                    //         'username': smsUsername,
+                    //         'passWord': smsPassword,
+                    //         'text': tempGeneratedOtp,
+                    //         'to': phoneNumber,
+                    //         'bodyId': '339184',
+                    //     })
+                    // });
+
+                    const smsResponseText = await smsResponse.text(); 
+                    console.log("SMS Service Response Raw:", smsResponseText);
+                    const match = smsResponseText.match(/>(\d+)</);
+                    const smsResultCode = match ? match[1] : null;
+
+                    if (smsResultCode === "1") {
+                        console.log("SMS sent successfully via Payamak-Panel.");
+                    } else {
+                        console.warn("SMS sending failed or API returned an error code:", smsResultCode, "Full response:", smsResponseText);
+                    }
+                } catch (smsError) {
+                    console.error("Error calling SMS service:", smsError);
+                } finally {
+                     navigateToStep(4); 
+                }
+
+            } catch (e) { 
+                console.error("Error saving user OTP to Firestore:", e);
+                displayError(3, "خطا در ذخیره کد تایید. لطفا دوباره تلاش کنید.");
+                navigateToStep(4); 
+            } finally {
+                setLoading(3, false);
+            }
         }
         
-        // Step 3: Regardless of SMS success, navigate to the OTP entry screen
-        document.getElementById('otpSentTo').textContent = `کد تایید به شماره ${toPersianNum(phoneNumber)} ارسال شد.`;
-        document.getElementById('generatedOtpDisplay').textContent = `کد تایید شما (برای تست): ${toPersianNum(tempGeneratedOtp)}`;
-        const otpInputEl = document.getElementById('otpInput');
-        if(otpInputEl) otpInputEl.value = ''; 
-        
-        navigateToStep(4);
-
-    } catch (e) { 
-        console.error("An error occurred during OTP process:", e);
-        displayError(3, "خطا در فرآیند ارسال کد. لطفا دوباره تلاش کنید.");
-    } finally {
-        setLoading(3, false);
-    }
-}
-
         async function handleUserOtpVerification() { 
             clearError(4); setLoading(4, true); 
             userEnteredOtp = toEnglishNum(document.getElementById('otpInput').value); 
